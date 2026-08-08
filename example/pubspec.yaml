@@ -1,0 +1,24 @@
+name: mole_example
+description: Minimal Mole demo — write to SharedPreferences, Hive, Secure Storage, and cache, then inspect with the Mole bubble.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  mole:
+    path: ../
+  flutter_secure_storage: ^9.2.4
+  hive: ^2.2.3
+  path_provider: ^2.1.4
+  shared_preferences: ^2.3.4
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
