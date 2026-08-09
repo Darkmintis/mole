@@ -45,6 +45,14 @@ class FakeMoleSource implements MoleSource {
     _emit();
   }
 
+  /// Simulates an external write (e.g. the host app talking directly to
+  /// SharedPreferences) — the backing store changes WITHOUT a stream emit,
+  /// exactly like sources that lack change notifications. Only [MoleStore.rescan]
+  /// makes it visible.
+  void seed(String key, dynamic value) {
+    _values[key] = value;
+  }
+
   @override
   Future<void> setValue(String key, dynamic value) async {
     _values[key] = value;

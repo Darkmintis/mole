@@ -4,6 +4,9 @@ import 'package:mole/mole.dart';
 
 import 'fakes.dart';
 
+/// Mirrors [MoleBubble]'s default corner clearance (above the exact corner).
+const _bubbleCornerMargin = 80.0;
+
 void main() {
   group('MoleConfig.cacheSizeWarningThresholdMB', () {
     test('defaults to 50', () {
@@ -54,6 +57,41 @@ void main() {
       await _settle();
 
       expect(store.totalCacheBytes, 0);
+    });
+  });
+
+  group('MoleStore.rescan', () {
+    test('picks up external writes that never hit the source stream', () async {
+      final fake = FakeMoleSource(store: {'existing': 'v1'});
+      final store = MoleStore();
+      store.addSource(fake);
+      await _settle();
+
+      expect(store.entriesOf(fake).length, 1);
+
+      // Host app writes straight to storage — no stream emit, so the store
+      // (and dashboard) still show the stale snapshot.
+      fake.seed('more', 'v2');
+      await _settle();
+      expect(store.entriesOf(fake).length, 1);
+
+      await store.rescan();
+      await _settle();
+      expect(store.entriesOf(fake).length, 2);
+    });
+
+    test('is reflected in totalEntries after external mutations', () async {
+      final fake = FakeMoleSource();
+      final store = MoleStore();
+      store.addSource(fake);
+      await _settle();
+
+      fake.seed('a', 1);
+      fake.seed('b', 2);
+      await store.rescan();
+      await _settle();
+
+      expect(store.totalEntries, 2);
     });
   });
 
@@ -114,6 +152,22 @@ void main() {
       // Database/cylinder icon, no persistent number.
       expect(find.byIcon(Icons.storage_rounded), findsOneWidget);
       expect(find.text('3'), findsNothing);
+    });
+
+    testWidgets('defaults to the bottom-right, a bit above the corner', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await pumpWithBubble(tester, const MoleConfig());
+
+      final bubble = tester.getRect(find.byType(MoleBubble));
+      // Bubble is 52x52 and its Positioned should sit ~16px off the right edge
+      // and ~80px above the bottom (clear of a typical FAB).
+      expect(bubble.right, closeTo(400 - 16, 0.1));
+      expect(bubble.bottom, closeTo(800 - _bubbleCornerMargin, 0.1));
     });
 
     testWidgets('pulses (fires animation) when a source changes', (
