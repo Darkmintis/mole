@@ -41,7 +41,13 @@ class _MoleBubbleState extends State<MoleBubble>
   static const _radius = 14.0;
   static const _pulseDuration = Duration(milliseconds: 500);
 
-  Offset _offset = const Offset(16, 120);
+  /// How far above the *exact* bottom-right corner the bubble sits by default
+  /// — clear of a typical floating action button (~56px + 16px gap).
+  static const _cornerMargin = 80.0;
+
+  /// Current offset (top-left). `null` until the user drags — while null the
+  /// bubble sits a little above the bottom-right corner (§3b default).
+  Offset? _offset;
 
   late final AnimationController _pulse = AnimationController(
     vsync: this,
@@ -110,9 +116,17 @@ class _MoleBubbleState extends State<MoleBubble>
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
 
+    // Default position: bottom-right but a little above the exact corner, so
+    // it doesn't overlap a floating action button / system gesture bar.
+    final position = _offset ??
+        Offset(
+          media.size.width - _size - 16,
+          media.size.height - _size - _cornerMargin,
+        );
+
     return Positioned(
-      left: _offset.dx.clamp(8.0, media.size.width - _size - 8),
-      top: _offset.dy.clamp(
+      left: position.dx.clamp(8.0, media.size.width - _size - 8),
+      top: position.dy.clamp(
         media.padding.top + 8,
         media.size.height - _size - 24,
       ),
@@ -148,7 +162,14 @@ class _MoleBubbleState extends State<MoleBubble>
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onPanUpdate: (details) {
-                setState(() => _offset += details.delta);
+                final end =
+                    (_offset ??
+                        Offset(
+                          MediaQuery.of(context).size.width - _size - _cornerMargin,
+                          MediaQuery.of(context).size.height - _size - _cornerMargin,
+                        )) +
+                    details.delta;
+                setState(() => _offset = end);
               },
               onTap: widget.onOpen,
               child: ScaleTransition(
