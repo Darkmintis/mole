@@ -14,11 +14,11 @@ class StorageService {
   static const secure = FlutterSecureStorage();
 
   static Future<Box> openBox() async {
-    try {
-      Hive.init('hive');
-    } on Object {
-      // Already initialized.
-    }
+    // Hive must be initialized with an absolute, app-private path. A relative
+    // path (e.g. 'hive') resolves to a read-only location on Android/iOS and
+    // throws `FileSystemException: Read-only file system`.
+    final dir = await getApplicationDocumentsDirectory();
+    Hive.init(dir.path);
     return Hive.openBox('mole_demo');
   }
 
