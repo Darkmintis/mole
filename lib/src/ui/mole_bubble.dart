@@ -1,20 +1,33 @@
 import 'package:flutter/material.dart';
 
+import '../config/mole_config.dart';
 import '../core/mole_store.dart';
 import 'mole_theme.dart';
 
-/// Simple floating count button. Tap opens the Mole dashboard.
+/// Floating draggable bubble. Tap opens the Mole dashboard.
 ///
-/// Shows the total number of stored entries across all sources as a badge.
+/// Follows the §3b spec — **no persistent count**. Storage writes are
+/// occasional, not a stream, so a number would be meaningless noise:
+///
+/// - **Default state**: a database/cylinder icon.
+/// - **Pulse-on-write**: brief ~500ms opacity/scale glow whenever any
+///   registered source changes. No number — just a visual pulse.
+/// - **Warning badge**: a small red dot appears **only if** total cache size
+///   crosses [MoleConfig.cacheSizeWarningThresholdMB].
+///
+/// The pulse runs on the [AnimationController] it owns locally; it never
+/// rebuilds the dashboard or source views, keeping §6 near-zero overhead.
 class MoleBubble extends StatefulWidget {
   const MoleBubble({
     super.key,
     required this.store,
+    required this.config,
     required this.showReleaseTag,
     required this.onOpen,
   });
 
   final MoleStore store;
+  final MoleConfig config;
   final bool showReleaseTag;
   final VoidCallback onOpen;
 
@@ -22,11 +35,30 @@ class MoleBubble extends StatefulWidget {
   State<MoleBubble> createState() => _MoleBubbleState();
 }
 
-class _MoleBubbleState extends State<MoleBubble> {
+class _MoleBubbleState extends State<MoleBubble>
+    with SingleTickerProviderStateMixin {
   static const _size = 52.0;
   static const _radius = 14.0;
+  static const _pulseDuration = Duration(milliseconds: 500);
 
   Offset _offset = const Offset(16, 120);
+
+  late final AnimationController _pulse = AnimationController(
+    vsync: this,
+    duration: _pulseDuration,
+  );
+  late final Animation<double> _opacity = Tween<double>(
+    begin: 0.35,
+    end: 1.0,
+  ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeOut));
+  late final Animation<double> _scale = Tween<double>(
+    begin: 0.9,
+    end: 1.0,
+  ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic));
+
+  /// Writes are occasional, so a pulse only replays on real changes (not on
+  /// the first listener registration, which fires the initial snapshot).
+  bool _pulsedOnce = false;
 
   @override
   void initState() {
@@ -37,17 +69,46 @@ class _MoleBubbleState extends State<MoleBubble> {
   @override
   void dispose() {
     widget.store.removeListener(_onStoreChanged);
+    _pulse.dispose();
     super.dispose();
   }
 
   void _onStoreChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    // Skip the initial snapshot so the bubble doesn't glow on first build.
+    if (!_pulsedOnce) {
+      _pulsedOnce = true;
+      return;
+    }
+    _pulse.forward(from: 0);
+  }
+
+  bool get _cacheOverThreshold {
+    final thresholdBytes = widget.config.cacheSizeWarningThresholdMB * 1024 * 1024;
+    return widget.store.totalCacheBytes >= thresholdBytes;
+  }
+
+  /// Small red dot pinned to the top-right corner — shown only when total
+  /// cache size crosses the §3b threshold. Added to the bubble's inner stack.
+  Widget _warningDot(ColorScheme scheme) {
+    return Positioned(
+      key: const ValueKey('mole-cache-warning-dot'),
+      top: 8,
+      right: 8,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFFB3261E),
+          shape: BoxShape.circle,
+          border: Border.all(color: scheme.inverseSurface, width: 1.5),
+        ),
+        child: const SizedBox(width: 9, height: 9),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-    final count = widget.store.totalEntries;
 
     return Positioned(
       left: _offset.dx.clamp(8.0, media.size.width - _size - 8),
@@ -84,32 +145,36 @@ class _MoleBubbleState extends State<MoleBubble> {
                   ),
                 ),
               ),
-            Material(
-              color: background,
-              elevation: 3,
-              shadowColor: Colors.black38,
-              borderRadius: BorderRadius.circular(_radius),
-              clipBehavior: Clip.antiAlias,
-              child: SizedBox(
-                width: _size,
-                height: _size,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onPanUpdate: (details) {
-                    setState(() => _offset += details.delta);
-                  },
-                  onTap: widget.onOpen,
-                  child: ColoredBox(
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onPanUpdate: (details) {
+                setState(() => _offset += details.delta);
+              },
+              onTap: widget.onOpen,
+              child: ScaleTransition(
+                scale: _scale,
+                child: FadeTransition(
+                  opacity: _opacity,
+                  child: Material(
                     color: background,
-                    child: Center(
-                      child: Text(
-                        '$count',
-                        style: TextStyle(
-                          color: foreground,
-                          fontWeight: FontWeight.w800,
-                          fontSize: count >= 100 ? 14 : 16,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                    elevation: 3,
+                    shadowColor: Colors.black38,
+                    borderRadius: BorderRadius.circular(_radius),
+                    clipBehavior: Clip.antiAlias,
+                    child: SizedBox(
+                      width: _size,
+                      height: _size,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Database/cylinder icon — the §3b default state.
+                          Icon(
+                            Icons.storage_rounded,
+                            size: 28,
+                            color: foreground,
+                          ),
+                          if (_cacheOverThreshold) _warningDot(scheme),
+                        ],
                       ),
                     ),
                   ),

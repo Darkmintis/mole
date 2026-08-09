@@ -176,6 +176,7 @@ class Mole {
         }
         return MoleBubble(
           store: _store!,
+          config: _config,
           showReleaseTag: _activation.showReleaseWarning,
           onOpen: () {
             unawaited(openDashboard());
