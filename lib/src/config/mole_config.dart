@@ -27,12 +27,20 @@ class MoleConfig {
   /// rapidly. Prevents rebuilding on every single write in a tight loop.
   final Duration refreshDebounce;
 
+  /// Total cache size (across all [MoleCacheSource] directories) in MB that,
+  /// when exceeded, shows a small red warning dot on the floating bubble.
+  ///
+  /// See plan §3b: the red dot is a **useful signal**, not decoration — Mole's
+  /// bubble never shows a persistent count. Default: `50`.
+  final int cacheSizeWarningThresholdMB;
+
   const MoleConfig({
     this.enabled = true,
     this.enableInRelease = false,
     this.showReleaseWarning = true,
     this.startMinimized = true,
     this.refreshDebounce = const Duration(milliseconds: 200),
+    this.cacheSizeWarningThresholdMB = 50,
   });
 
   MoleConfig copyWith({
@@ -41,6 +49,7 @@ class MoleConfig {
     bool? showReleaseWarning,
     bool? startMinimized,
     Duration? refreshDebounce,
+    int? cacheSizeWarningThresholdMB,
   }) {
     return MoleConfig(
       enabled: enabled ?? this.enabled,
@@ -48,6 +57,8 @@ class MoleConfig {
       showReleaseWarning: showReleaseWarning ?? this.showReleaseWarning,
       startMinimized: startMinimized ?? this.startMinimized,
       refreshDebounce: refreshDebounce ?? this.refreshDebounce,
+      cacheSizeWarningThresholdMB:
+          cacheSizeWarningThresholdMB ?? this.cacheSizeWarningThresholdMB,
     );
   }
 
@@ -58,7 +69,8 @@ class MoleConfig {
         'enableInRelease: $enableInRelease, '
         'showReleaseWarning: $showReleaseWarning, '
         'startMinimized: $startMinimized, '
-        'refreshDebounce: $refreshDebounce'
+        'refreshDebounce: $refreshDebounce, '
+        'cacheSizeWarningThresholdMB: $cacheSizeWarningThresholdMB'
         ')';
   }
 }

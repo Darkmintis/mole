@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../sources/mole_file_entry.dart';
 import '../sources/mole_source.dart';
 
 /// In-memory live view over the registered storage sources.
@@ -29,6 +30,23 @@ class MoleStore extends ChangeNotifier {
     var total = 0;
     for (final v in _cache.values) {
       total += v.length;
+    }
+    return total;
+  }
+
+  /// Total bytes across every cached file in cache-type sources.
+  ///
+  /// Used by the floating bubble for the §3b cache-size warning dot. Only
+  /// [MoleFileEntry] values (files surfaced by a [MoleCacheSource]) count.
+  int get totalCacheBytes {
+    var total = 0;
+    for (final entries in _cache.values) {
+      for (final entry in entries) {
+        final value = entry.value;
+        if (value is MoleFileEntry) {
+          total += value.size;
+        }
+      }
     }
     return total;
   }
