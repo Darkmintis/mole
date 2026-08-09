@@ -142,6 +142,9 @@ class Mole {
 
     _inspectorOpen.value = true;
     try {
+      // Re-read non-notifying sources (prefs/secure/cache) so data written by
+      // the app while the dashboard was closed always shows up.
+      await _store!.rescan();
       await nav.push(
         PageRouteBuilder<void>(
           opaque: true,

@@ -148,6 +148,14 @@ class _MoleDashboardState extends State<MoleDashboard> {
             ],
           ),
           actions: [
+            if (sources.isNotEmpty)
+              IconButton(
+                tooltip: 'Rescan storage',
+                onPressed: () {
+                  widget.store.rescan();
+                },
+                icon: const Icon(Icons.refresh_rounded),
+              ),
             if (sources.isNotEmpty && widget.onClearAll != null)
               IconButton(
                 tooltip: 'Clear everything',
