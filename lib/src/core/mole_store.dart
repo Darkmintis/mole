@@ -121,6 +121,40 @@ class MoleStore extends ChangeNotifier {
     _scheduleNotify();
   }
 
+  /// Forces every source to re-read its backing storage and re-emit its
+  /// current snapshot.
+  ///
+  /// Sources whose storage offers no change notifications (SharedPreferences,
+  /// Secure Storage, Cache) can't detect external writes on their own. Opening
+  /// the dashboard triggers this so data written behind Mole's back always
+  /// shows up.
+  Future<void> rescan() async {
+    if (_disposed) return;
+    for (final source in List<MoleSource>.of(_sources)) {
+      final sub = _subs.remove(source);
+      if (sub != null) {
+        await sub.cancel();
+      }
+      // Re-listening runs the source's on-listen snapshot again, so it pulls
+      // the freshest state from the backing storage (esp. non-notifying ones).
+      // ignore: cancel_subscriptions — lifecycle managed by removeSource/dispose.
+      final next = source.watch().listen(
+        (entries) {
+          if (_disposed) return;
+          _cache[source] = List.of(entries);
+          _scheduleNotify();
+        },
+        onError: (Object e) {
+          if (_disposed) return;
+          _cache[source] = [];
+          _scheduleNotify();
+        },
+      );
+      _subs[source] = next;
+    }
+    _scheduleNotify();
+  }
+
   void _scheduleNotify() {
     _timer?.cancel();
     _timer = Timer(_debounce, _notify);
