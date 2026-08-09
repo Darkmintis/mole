@@ -91,8 +91,8 @@ class StorageService {
     return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
   }
 
-  /// Cache section: writes real files (an image + a JSON summary) into the app
-  /// temp directory so `MoleCacheSource` lists them.
+  /// Cache section: writes the bundled profile image + a JSON summary into the
+  /// app temp directory so `MoleCacheSource` lists them as real files.
   static Future<void> writeCache() async {
     final dir = await getTemporaryDirectory();
     final cacheDir = Directory('${dir.path}/mole_demo_cache');
@@ -100,8 +100,9 @@ class StorageService {
       await cacheDir.create(recursive: true);
     }
 
-    // A tiny valid 1x1 PNG so the renderer can decode a thumbnail.
-    await File('${cacheDir.path}/demo.png').writeAsBytes(await _assetBytes());
+    // The cached "image" is the same bundled profile.png the Hive section
+    // stored as raw bytes, so the thumbnail renderer decodes a real image.
+    await File('${cacheDir.path}/profile.png').writeAsBytes(await _assetBytes());
     await File('${cacheDir.path}/summary.json').writeAsString(
       const JsonEncoder.withIndent('  ').convert({
         'app': 'mole',

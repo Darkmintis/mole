@@ -284,8 +284,8 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _label(
                   context,
-                  'Writes a sample image + JSON summary into the app temp '
-                  'cache directory. Files are view/delete only in Mole.',
+                  'Caches the bundled profile.png + a JSON summary into the '
+                  'app temp cache dir. Files are view/delete only in Mole.',
                 ),
                 Align(
                   alignment: Alignment.centerRight,
