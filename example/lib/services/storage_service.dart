@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,10 +9,26 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Shared storage helper so the demo app has somewhere to write data before
 /// inspecting it with Mole.
+///
+/// Every section of the demo screen (see §10 of MOLE_PLAN.md) writes to a real
+/// source:
+/// - SharedPreferences — three separate pref keys (name / dark_mode /
+///   notifications).
+/// - Secure Storage — a fake `auth_token` (demonstrates masked display).
+/// - Hive — a nested `Map` profile PLUS raw `Uint8List` bytes read from the
+///   bundled `assets/profile.png` (proves the image-thumbnail path).
+/// - Cache — a profile image file written under the app's temporary directory
+///   so `MoleCacheSource` has a real, inspectable/deletable file.
 class StorageService {
   StorageService._();
 
   static const secure = FlutterSecureStorage();
+
+  /// Hive keys used by the demo. Editing/deleting `profile` in Mole should
+  /// write through to the app on the next read.
+  static const profileKey = 'profile';
+  static const profileImageKey = 'profile_image';
+  static const tokenKey = 'auth_token';
 
   static Future<Box> openBox() async {
     // Hive must be initialized with an absolute, app-private path. A relative
@@ -22,37 +39,86 @@ class StorageService {
     return Hive.openBox('mole_demo');
   }
 
-  static Future<void> writePrefs(SharedPreferences prefs) async {
-    await prefs.setString('username', 'mole');
-    await prefs.setInt('login', 3);
-    await prefs.setBool('dark_mode', false);
-    await prefs.setDouble('rating', 4.75);
-    await prefs.setStringList('theme_searches', ['mole', 'storage']);
+  /// Reads the current preferences so the form can pre-fill from real storage
+  /// (and reflect edits Mole made).
+  static Map<String, Object?> currentPrefs(SharedPreferences prefs) {
+    return {
+      'name': prefs.getString('name'),
+      'dark_mode': prefs.getBool('dark_mode'),
+      'notifications': prefs.getBool('notifications'),
+    };
   }
 
-  static Future<void> writeHive(Box box) async {
-    await box.put('profile', {'name': 'Mole', 'stats': [1, 2, 3]});
-    await box.put('last_sync', DateTime.now().toIso8601String());
-    await box.put('counter', 42);
+  /// Writes each form field as its own pref key — §10 SharedPreferences section.
+  static Future<void> savePrefs(
+    SharedPreferences prefs, {
+    required String name,
+    required bool darkMode,
+    required bool notifications,
+  }) async {
+    await prefs.setString('name', name);
+    await prefs.setBool('dark_mode', darkMode);
+    await prefs.setBool('notifications', notifications);
   }
 
-  static Future<void> writeSecure() async {
-    await secure.write(key: 'access_token', value: 'secure-token-abc123');
-    await secure.write(key: 'refresh_token', value: 'refresh-token-xyz789');
+  /// Fake login — Secure Storage section.
+  static Future<void> login() async {
+    await secure.write(key: tokenKey, value: 'fake-token-abc123');
   }
 
-  /// Writes a couple of cache files (one image, one json) into the app's temp
-  /// directory so MoleCacheSource has something to display.
+  /// Reads the logged-in token, if any (used to echo the secure value back).
+  static Future<String?> currentToken() => secure.read(key: tokenKey);
+
+  /// Hive section: writes a nested profile Map plus raw image bytes from the
+  /// bundled asset.
+  static Future<void> saveProfile(Box box) async {
+    await box.put(profileKey, <String, dynamic>{
+      'name': 'Mole Demo',
+      'theme': {'mode': 'system', 'accent': 'green'},
+      'prefs': <String, dynamic>{
+        'dark': true,
+        'savedAt': DateTime.now().toIso8601String(),
+      },
+    });
+    final imageBytes = await bundleImageBytes();
+    await box.put(profileImageKey, imageBytes);
+  }
+
+  /// Loads the bundled [profile.png] (flutter asset) as raw bytes. This is
+  /// what proves `MoleValueRenderer` can thumbnail real binary data.
+  static Future<Uint8List> bundleImageBytes() async {
+    final data = await rootBundle.load('assets/profile.png');
+    return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+  }
+
+  /// Cache section: writes real files (an image + a JSON summary) into the app
+  /// temp directory so `MoleCacheSource` lists them.
   static Future<void> writeCache() async {
     final dir = await getTemporaryDirectory();
     final cacheDir = Directory('${dir.path}/mole_demo_cache');
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
     }
+
     // A tiny valid 1x1 PNG so the renderer can decode a thumbnail.
-    await File('${cacheDir.path}/demo.png').writeAsBytes(_pngBytes());
-    await File('${cacheDir.path}/summary.json')
-        .writeAsString('{"app":"mole","entries":42}');
+    await File('${cacheDir.path}/demo.png').writeAsBytes(await _assetBytes());
+    await File('${cacheDir.path}/summary.json').writeAsString(
+      const JsonEncoder.withIndent('  ').convert({
+        'app': 'mole',
+        'entries': 42,
+        'repo': 'github.com/Darkmintis/mole',
+      }),
+    );
+  }
+
+  /// The bundled asset in normal runs; falls back to an inline 1x1 PNG so
+  /// `flutter test` (no asset bundle) still works.
+  static Future<Uint8List> _assetBytes() async {
+    try {
+      return await bundleImageBytes();
+    } on Object {
+      return _pngBytes();
+    }
   }
 
   static Uint8List _pngBytes() => Uint8List.fromList(<int>[

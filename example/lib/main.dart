@@ -10,16 +10,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
+  final box = await StorageService.openBox();
 
   Mole.install(
     config: const MoleConfig(),
     sources: [
       MoleSharedPrefsSource(prefs),
-      MoleHiveSource(await StorageService.openBox()),
+      MoleHiveSource(box),
       MoleSecureStorageSource(const FlutterSecureStorage()),
       MoleCacheSource(),
     ],
   );
 
-  runApp(const MoleExampleApp());
+  runApp(MoleExampleApp(prefs: prefs, box: box));
 }
