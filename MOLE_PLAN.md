@@ -26,7 +26,7 @@ Every occurrence of `Ferret` / `ferret` must become `Mole` / `mole`. This includ
 
 ### 1b. What stays exactly the same (reuse, don't rebuild)
 
-- The floating bubble UI (draggable, minimizable, resizable) — visual behavior unchanged
+- The floating bubble UI (draggable, minimizable, resizable) — except the indicator behavior, which changes per §3b (database icon + pulse + threshold badge instead of a persistent count)
 - Material 3 dashboard shell, dark/light auto-theme
 - The `enabled` / `enableInRelease` / `showReleaseWarning` config gating system and its exact boot logic (see Section 4) — this is Mole's core trust mechanism too, identical to Ferret's
 - The release-mode console warning + persistent on-screen "ACTIVE IN RELEASE" tag
@@ -64,6 +64,7 @@ Same spirit as Ferret, adapted:
 - `Mole.install(config:, sources:)` — one-line install, developer passes already-created storage instances
 - Built-in source adapters: `MoleSharedPrefsSource`, `MoleHiveSource`, `MoleSecureStorageSource`, `MoleCacheSource`
 - `MoleValueRenderer` — one shared value renderer used by every source's list + detail view (see below)
+- **Mole bubble**: database icon + pulse-on-write + cache-threshold badge (see 3b)
 - Floating draggable/minimizable bubble (reused from Ferret)
 - Dashboard home: list of registered sources with entry counts
 - Tap a source → table/list view of all keys + values in that source, live-updating
@@ -109,6 +110,28 @@ Renderer behavior:
 `Map`/`List` values are editable. Binary/image values (Hive bytes, cache
 files) are **view + delete only**. Never build an edit UI for raw bytes.
 
+### 3b. Mole bubble behavior — the floating indicator
+
+Unlike Ferret's bubble (which shows a live API call count, since network
+calls are a constant stream), Mole's bubble does **NOT** show a persistent
+number. Storage writes are occasional, not a stream, so a static count would
+just be meaningless noise most of the time.
+
+Implement instead:
+
+- **Default state: a database icon** — a database/cylinder icon (not a
+  magnifying glass, not a folder icon). A database/cylinder icon reads as more
+  professional and immediately signals "this inspects storage".
+- **Pulse-on-write**: briefly flash/glow the bubble (~500ms animation)
+  whenever any registered source changes — lightweight feedback that something
+  happened. No number, just a visual pulse.
+- **Optional warning badge**: a small red dot appears **only if** total cache
+  size crosses a configurable threshold (default `50MB`). This is the one case
+  a badge is actually useful signal, not decoration.
+- **Keep this lightweight**: the pulse is a simple opacity/scale animation on
+  the bubble, NOT a heavy widget rebuild of the dashboard or source views. It
+  must not affect the "near-zero overhead" requirement from Section 6.
+
 ---
 
 ## 4. Config System (identical pattern to Ferret)
@@ -119,12 +142,14 @@ class MoleConfig {
   final bool enableInRelease;
   final bool showReleaseWarning;
   final bool startMinimized;
+  final int cacheSizeWarningThresholdMB; // default: 50
 
   const MoleConfig({
     this.enabled = true,
     this.enableInRelease = false,
     this.showReleaseWarning = true,
     this.startMinimized = true,
+    this.cacheSizeWarningThresholdMB = 50,
   });
 }
 ```
@@ -241,7 +266,9 @@ mole/
 │       └── export/
 │           └── json_exporter.dart      // v1.1
 ├── example/
-│   └── lib/main.dart                   // demo app registering all 4 source types
+│   ├── lib/main.dart               // single form-based demo screen exercising all 4 sources (see §10)
+│   ├── lib/services/storage_service.dart // initializes prefs/hive/secure/cache instances
+│   └── assets/profile.png          // small bundled image → stored as raw Uint8List in Hive
 ├── test/
 ├── CHANGELOG.md
 ├── README.md
@@ -275,7 +302,8 @@ mole/
 - Build **`MoleValueRenderer` as a shared component FIRST**, then wire both
   `mole_source_view.dart` and `mole_detail_view.dart` to use it — do not build
   per-source rendering logic that duplicates this
-- Reuse Ferret's bubble component as-is (just renamed)
+- Build the bubble per §3b: database icon, pulse-on-write (~500ms), cache-size
+  warning badge; do **not** reuse Ferret's call-count badge
 - Dashboard: list of sources with entry counts
 - Source view (uses `MoleValueRenderer`): lazy-loaded table/list of entries, live-updating
 
@@ -310,3 +338,46 @@ mole/
 - [ ] `MoleValueRenderer` correctly renders primitives, JSON, images (from Hive bytes and cache files), and unrecognized binary without crashing
 - [ ] Editing is blocked/hidden for binary and cache-file entries — view/delete only
 - [ ] Clearing the cache directory works with a confirmation dialog
+- [ ] Edit-writes-through verified in the example app: editing a SharedPreferences value in Mole is reflected in the host app after reload (see §10, step 2) — mandatory before publishing
+
+---
+
+## 10. Example App — Live Window Into Storage (two-way test flow)
+
+`example/lib/main.dart` is built as **one single form-based screen** that
+exercises all 4 registered sources. It is the core proof of Mole's value — a
+live window into storage, not a snapshot. Register the demo source instances
+in `example/lib/services/storage_service.dart` and wire this screen to
+`Mole.install(...)`.
+
+### 10a. The four sections (each wired to a real source)
+
+- **SharedPreferences section** — a text field (name), and two toggles (dark
+  mode, notifications). A **Save** button writes each as a **separate pref
+  key**.
+- **Secure Storage section** — a **Login** button that writes a fake
+  `auth_token` string. Demonstrates Mole's masked / tap-to-reveal display for
+  secure values.
+- **Hive section** — a **Save Profile** button that writes a **nested Map**
+  object into a Hive box, PLUS a separate entry storing **raw `Uint8List`
+  bytes**. Bundle a small sample image as a Flutter asset, read its bytes, and
+  store them in Hive — this proves the image-thumbnail rendering path in
+  `MoleValueRenderer` works on real binary data.
+- **Cache section** — a button that caches a sample network image (via
+  `cached_network_image` or a manual write to `getTemporaryDirectory()`), to
+  populate `MoleCacheSource` with a real, inspectable/deletable file.
+
+### 10b. Documented two-way test flow (in the example app's README/comments)
+
+1. Fill the form, tap each Save/Login/Cache button → open the Mole bubble →
+   confirm all 4 sources show the new data.
+2. **Edit-writes-through (do not ship without passing this)**: in Mole, edit
+   one SharedPreferences value directly → return to the app screen and reload
+   → the app must show the edited value. This proves Mole writes through to
+   real storage.
+3. Repeat the edit check for the Hive entry (non-binary field) and confirm it
+   also writes through.
+4. Delete a key from Mole (in each of Prefs, Secure Storage, Hive) → confirm
+   the app reflects the default/empty state on next read.
+5. Delete the cached image file from Mole → confirm it's gone from disk, or the
+   app re-downloads it if reloaded.
