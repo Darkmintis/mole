@@ -4,7 +4,11 @@ import 'package:mole/mole.dart';
 
 /// In-memory fake source for unit/widget tests.
 class FakeMoleSource implements MoleSource {
-  FakeMoleSource({Map<String, dynamic>? store}) : _values = {
+  FakeMoleSource({
+    Map<String, dynamic>? store,
+    this.name = 'Fake Source',
+    this.type = 'prefs',
+  }) : _values = {
     ...?store,
   };
 
@@ -16,10 +20,10 @@ class FakeMoleSource implements MoleSource {
   List<MoleDataEntry> _cache = const [];
 
   @override
-  String get name => 'Fake Source';
+  final String name;
 
   @override
-  String get type => 'prefs';
+  final String type;
 
   Map<String, dynamic> get values => Map.unmodifiable(_values);
 

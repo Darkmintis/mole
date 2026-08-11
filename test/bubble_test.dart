@@ -248,6 +248,27 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('is dimmed when no registered source has data', (tester) async {
+      await pumpWithBubble(tester, const MoleConfig());
+
+      final opacity = tester.widget<AnimatedOpacity>(
+        find.byType(AnimatedOpacity),
+      );
+      expect(opacity.opacity, closeTo(0.38, 0.01));
+    });
+
+    testWidgets('is full opacity when any source has data', (tester) async {
+      final (store, fake) = await pumpWithBubble(tester, const MoleConfig());
+      fake.set('key', 'value');
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final opacity = tester.widget<AnimatedOpacity>(
+        find.byType(AnimatedOpacity),
+      );
+      expect(opacity.opacity, 1.0);
+      expect(store.totalEntries, 1);
+    });
   });
 }
 

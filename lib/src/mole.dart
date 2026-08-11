@@ -53,7 +53,8 @@ class Mole {
   /// One-line install.
   ///
   /// Pass the storage instances you already created. Mole wraps them — it
-  /// never creates or owns storage instances itself.
+  /// never creates or owns storage instances itself, and only the sources you
+  /// list here appear in the inspector.
   ///
   /// ```dart
   /// Mole.install(

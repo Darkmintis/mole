@@ -7,7 +7,7 @@ Local storage inspector for Flutter — see, edit, and clear everything your app
 [![pub package](https://img.shields.io/pub/v/mole.svg)](https://pub.dev/packages/mole)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Mole registers the storage instances *you already created* and shows them in a Material 3 inspector: floating bubble, list of sources, live key/value tables, per-entry edit/delete, and clear-all per source.
+Mole registers the storage instances *you* pass to `Mole.install` — nothing is added automatically. Only those sources appear in the dashboard.
 
 ## Why Mole
 
@@ -142,7 +142,7 @@ Secure Storage values are masked in-app because they are real secrets (tokens, c
 
 - One-line `Mole.install(config:, sources:)`
 - Built-in adapters for SharedPreferences, Hive, Secure Storage
-- Floating draggable bubble (hidden while the inspector is open)
+- Floating draggable bubble (dimmed when empty, hidden while inspector is open)
 - Dashboard: grouped sources with live entry counts
 - Live key/value tables per source
 - Per-entry **edit** and **delete**

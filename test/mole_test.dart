@@ -129,6 +129,34 @@ void main() {
     });
   });
 
+  testWidgets('dashboard lists only sources registered by the host app', (
+    tester,
+  ) async {
+    final prefs = FakeMoleSource(name: 'SharedPreferences', type: 'prefs');
+    final hive = FakeMoleSource(
+      name: 'Hive Box',
+      type: 'hive',
+      store: {'k': 'v'},
+    );
+    final store = MoleStore();
+    store.addSource(hive);
+
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: MoleDashboard(
+          store: store,
+          config: const MoleConfig(),
+          onClearAll: () {},
+        ),
+      ),
+    );
+
+    expect(find.text('Hive Box'), findsOneWidget);
+    expect(find.text('SharedPreferences'), findsNothing);
+    expect(prefs, isNot(store.sources));
+  });
+
   testWidgets('dashboard renders registered sources with counts', (tester) async {
     final fake = FakeMoleSource(
       store: {
