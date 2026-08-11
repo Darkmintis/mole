@@ -162,11 +162,12 @@ class _MoleBubbleState extends State<MoleBubble>
             GestureDetector(
               behavior: HitTestBehavior.opaque,
               onPanUpdate: (details) {
+                final media = MediaQuery.of(context);
                 final end =
                     (_offset ??
                         Offset(
-                          MediaQuery.of(context).size.width - _size - _cornerMargin,
-                          MediaQuery.of(context).size.height - _size - _cornerMargin,
+                          media.size.width - _size - 16,
+                          media.size.height - _size - _cornerMargin,
                         )) +
                     details.delta;
                 setState(() => _offset = end);
