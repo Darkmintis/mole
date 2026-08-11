@@ -7,11 +7,9 @@ import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Shared storage helper so the demo app has somewhere to write data before
-/// inspecting it with Mole.
+/// Shared storage helper for the Mole example app.
 ///
-/// Every section of the demo screen (see §10 of MOLE_PLAN.md) writes to a real
-/// source:
+/// Each demo section writes to a real source so you can inspect it in Mole.
 /// - SharedPreferences - three separate pref keys (name / dark_mode /
 ///   notifications).
 /// - Secure Storage - a fake `auth_token` (demonstrates masked display).

@@ -1,26 +1,9 @@
 # Mole
 
-Local storage inspector for Flutter - see, edit, and clear everything your app has stored in **SharedPreferences**, **Hive**, **Secure Storage**, and more.
-
-**See everything. Ship nothing you didn't mean to.**
+Local storage inspector for Flutter. Pass the storage instances your app already uses, get a floating bubble in debug, and inspect, edit, or delete stored values.
 
 [![pub package](https://img.shields.io/pub/v/mole.svg)](https://pub.dev/packages/mole)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-Mole registers the storage instances *you* pass to `Mole.install` - nothing is added automatically. Only those sources appear in the dashboard.
-
-## Why Mole
-
-Most Flutter storage debuggers make you wire up fake mirrors or read raw files. Mole is different:
-
-| | Typical tools | Mole |
-|---|---|---|
-| Setup | Adapters, mocks, polling | Register existing instances - zero adapters |
-| Sources | Usually one backend | Grouped by source: prefs · Hive · Secure |
-| Values | Read-only export | **Inline edit + delete** per key |
-| Clear | Manual | **Clear one key, one source, or everything** |
-| Release | Usually unavailable or unsafe | **Off by default** (true no-op) |
-| Release warning | Often missing | **Only when release is on** - banner + red tag |
 
 ## Install
 
@@ -33,20 +16,29 @@ dependencies:
 flutter pub get
 ```
 
-## Quick start
+## Setup
 
-Register the storage instances your app already owns:
+### 1. Add config
+
+Create `lib/mole_config.dart`:
 
 ```dart
 import 'package:mole/mole.dart';
+
+const moleConfig = MoleConfig(
+  enabled: true,          // false = hide bubble, Mole does nothing
+  enableInRelease: false, // keep false for production
+);
+```
+
+### 2. Install in `main.dart`
+
+```dart
 import 'package:flutter/material.dart';
+import 'package:mole/mole.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Edit this file to control Mole - copy it into your own project.
-const moleConfig = MoleConfig(
-  enabled: true,
-  enableInRelease: false,
-);
+import 'mole_config.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,145 +49,72 @@ Future<void> main() async {
     config: moleConfig,
     sources: [
       MoleSharedPrefsSource(prefs),
-      // MoleHiveSource(box: myBox),
+      // Add only what your app uses:
+      // MoleHiveSource(box),
       // MoleSecureStorageSource(secureStorage),
+      // MoleCacheSource(),
     ],
+    onStorageChanged: () {
+      // Optional: reload your UI when Mole edits storage.
+    },
   );
 
   runApp(const MyApp());
 }
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: Mole.navigatorKey,
-      builder: Mole.builder, // floating bubble
-      home: const HomePage(),
-    );
-  }
-}
 ```
 
-Tap the floating bubble to open the dashboard. Sources are listed with live entry counts; tap one to browse its keys and values.
-
-## Edits write through to your app
-
-Mole mutates the **same storage instances** you register. An edit in the inspector is a real `SharedPreferences.setString`, `box.put`, etc. - not a shadow copy.
-
-Your app UI will not reload by itself. Pass `onStorageChanged` to re-read storage when Mole edits or deletes data:
+### 3. Attach to `MaterialApp`
 
 ```dart
-Mole.install(
-  config: moleConfig,
-  sources: [MoleSharedPrefsSource(prefs)],
-  onStorageChanged: () {
-    // Re-read prefs / Hive / secure storage into your widgets.
-    reloadSettingsFromStorage();
-  },
-);
+MaterialApp(
+  navigatorKey: Mole.navigatorKey,
+  builder: Mole.builder,
+  home: const HomePage(),
+)
 ```
 
-Edits preserve the original value type where possible (bools stay bools, JSON maps stay maps).
+Tap the floating bubble to open the inspector.
 
-## Configuration
+## Config
 
-Create a `mole_config.dart` in your project (copy from the example) and edit it once:
-
-```dart
-// lib/mole_config.dart
-import 'package:mole/mole.dart';
-
-const moleConfig = MoleConfig(
-  enabled: true,            // set false to hide the bubble entirely
-  enableInRelease: false,   // set true only when you need release inspection
-  refreshDebounce: Duration(milliseconds: 200),
-);
-```
-
-```dart
-Mole.install(config: moleConfig, sources: [...]);
-```
-
-Or pass config inline:
-
-```dart
-Mole.install(
-  config: const MoleConfig(
-    enabled: true,
-    enableInRelease: false,
-    refreshDebounce: Duration(milliseconds: 200),
-  ),
-  sources: [...],
-);
-```
-
-### Debug and release behavior
-
-| Mode | Behavior |
-|---|---|
-| Debug / Profile | On when `enabled: true` (default). Bubble hidden while inspector is open. |
-| Release | Off unless `enabled: true` **and** `enableInRelease: true` |
-| Release + both on | Inspector runs with a loud console warning **and** a permanent red **MOLE ACTIVE** tag |
-| Release off | No inspector, **no warning** |
-
-Set `enabled: false` to turn Mole off completely - no bubble, no listeners, zero overhead.
-
-When Mole is active in release, the warning is automatic and cannot be disabled separately.
-
-## Source adapters
-
-Mole never creates or owns storage instances - pass it the ones you already have.
-
-| Adapter | Storage | Values |
+| Option | Default | Description |
 |---|---|---|
-| `MoleSharedPrefsSource(prefs)` | `SharedPreferences` | Full raw visibility |
-| `MoleHiveSource(box)` | Hive `Box` | Full raw visibility, live via box watch |
-| `MoleSecureStorageSource(storage)` | `flutter_secure_storage` | **Masked by default** - tap to reveal |
+| `enabled` | `true` | Master switch. `false` turns Mole off completely. |
+| `enableInRelease` | `false` | Allow Mole in release builds. Shows a console warning and red **MOLE ACTIVE** tag. |
 
-Secure Storage values are masked in-app because they are real secrets (tokens, credentials) sitting at rest on a device. `SharedPreferences` and Hive values are shown exactly as stored.
+| Build | Mole runs when |
+|---|---|
+| Debug / profile | `enabled: true` |
+| Release | `enabled: true` and `enableInRelease: true` |
 
-## Features (v0.1)
+## Sources
 
-- One-line `Mole.install(config:, sources:)`
-- Built-in adapters for SharedPreferences, Hive, Secure Storage
+Register only the storage your app already created. Only registered sources appear in Mole.
+
+| Adapter | Backend |
+|---|---|
+| `MoleSharedPrefsSource(prefs)` | SharedPreferences |
+| `MoleHiveSource(box)` | Hive box |
+| `MoleSecureStorageSource(storage)` | flutter_secure_storage (masked until reveal) |
+| `MoleCacheSource()` | App temp/cache files |
+
+Edits in Mole write to the same instances you pass in. Use `onStorageChanged` if your UI should refresh after an edit.
+
+## What you get
+
 - Floating draggable bubble (hidden while the inspector is open)
-- Dashboard: grouped sources with live entry counts
-- Live key/value tables per source
-- Per-entry **edit** and **delete**
-- Clear a single source with a confirmation dialog
-- Search/filter by key or value
-- Material 3, auto dark/light theme
-- True no-op when disabled
+- Dashboard grouped by source with live entry counts
+- View, edit, delete, and clear per key or per source
+- Search by key or value
+- Off by default in release unless you opt in
 
-Coming soon (v1.1): Isar adapter, JSON export + share, and clear-everything across all sources with a stronger guard.
-
-## Example
+## Example app
 
 ```bash
 git clone https://github.com/darkmintis/mole.git
-cd mole
-fvm use 3.44.1   # or use your Flutter 3.44.1+ SDK
-cd example
+cd mole/example
 flutter run
 ```
-
-The example writes sample values into SharedPreferences, a Hive box, and Secure Storage, then lets you open the Mole bubble to inspect/edit/clear them.
-
-## API surface
-
-```dart
-Mole.install(config: ..., sources: [...]);
-Mole.addSources([...]);          // register more sources later
-Mole.navigatorKey                // attach to MaterialApp
-Mole.builder                     // MaterialApp / CupertinoApp builder
-Mole.showOverlay(context)        // optional manual overlay
-Mole.openDashboard()             // opens inspector
-Mole.isActive
-```
-
 
 ## Requirements
 
