@@ -11,10 +11,12 @@ class MoleExampleApp extends StatelessWidget {
     super.key,
     this.prefs,
     this.box,
+    this.storageRevision,
   });
 
   final SharedPreferences? prefs;
   final Box? box;
+  final ValueNotifier<int>? storageRevision;
 
   @override
   Widget build(BuildContext context) {
@@ -29,6 +31,7 @@ class MoleExampleApp extends StatelessWidget {
         key: ValueKey(prefs),
         prefs: prefs,
         box: box,
+        storageRevision: storageRevision,
       ),
     );
   }

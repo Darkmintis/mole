@@ -12,6 +12,7 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final box = await StorageService.openBox();
+  final storageRevision = ValueNotifier<int>(0);
 
   Mole.install(
     config: moleConfig,
@@ -21,7 +22,14 @@ Future<void> main() async {
       MoleSecureStorageSource(const FlutterSecureStorage()),
       MoleCacheSource(),
     ],
+    onStorageChanged: () => storageRevision.value++,
   );
 
-  runApp(MoleExampleApp(prefs: prefs, box: box));
+  runApp(
+    MoleExampleApp(
+      prefs: prefs,
+      box: box,
+      storageRevision: storageRevision,
+    ),
+  );
 }

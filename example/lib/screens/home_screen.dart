@@ -25,12 +25,14 @@ class HomeScreen extends StatefulWidget {
     super.key,
     this.prefs,
     this.box,
+    this.storageRevision,
   });
 
   /// Provide the already-registered instances so edits in Mole echo back.
   /// When null (widget tests), the screen resolves its own instances.
   final SharedPreferences? prefs;
   final Box? box;
+  final ValueNotifier<int>? storageRevision;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -50,13 +52,23 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    widget.storageRevision?.addListener(_onMoleStorageChanged);
     _init();
   }
 
   @override
   void dispose() {
+    widget.storageRevision?.removeListener(_onMoleStorageChanged);
     _nameController.dispose();
     super.dispose();
+  }
+
+  void _onMoleStorageChanged() {
+    if (!mounted || _prefs == null) return;
+    _loadIntoForm();
+    setState(
+      () => _status = 'Form synced - storage was edited in Mole.',
+    );
   }
 
   Future<void> _init() async {
@@ -82,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// Opens the demo Hive box. Fails silently when plugins are unavailable
-  /// (e.g. widget tests) — the demo screen then just can't write to Hive.
+  /// (e.g. widget tests) - the demo screen then just can't write to Hive.
   Future<Box?> _resolveBox() async {
     try {
       return await StorageService.openBox();
@@ -91,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Re-reads current storage values into the form controls — this is what
+  /// Re-reads current storage values into the form controls - this is what
   /// proves Mole's edits/deletes "write through" to the app (§10b steps 2-5).
   void _loadIntoForm() {
     final current = _prefs == null
@@ -111,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await action();
       if (!mounted) return;
-      setState(() => _status = '$label done — open the Mole bubble to inspect.');
+      setState(() => _status = '$label done - open the Mole bubble to inspect.');
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _status = '$label failed: $e');
@@ -147,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mole Demo — Storage Playground'),
+        title: Text('Mole Demo - Storage Playground'),
         actions: [
           IconButton(
             tooltip: 'Reload from storage',
@@ -155,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? () => setState(() {
                       _loadIntoForm();
                       _status =
-                          'Reloaded — values now reflect what Mole has stored.';
+                          'Reloaded - values now reflect what Mole has stored.';
                     })
                 : null,
             icon: const Icon(Icons.refresh_rounded),
@@ -233,7 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _label(
                   context,
-                  'Writes a fake auth_token — masked/tap-to-reveal in Mole.',
+                  'Writes a fake auth_token - masked/tap-to-reveal in Mole.',
                 ),
                 Align(
                   alignment: Alignment.centerRight,
