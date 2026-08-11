@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mole/mole.dart';
+import 'package:mole/src/core/mole_value_coercion.dart';
 
 import 'fakes.dart';
 
@@ -126,6 +127,41 @@ void main() {
       );
       expect(off.active, isFalse);
       expect(off.showReleaseWarning, isFalse);
+    });
+  });
+
+  group('MoleStore.onStorageChanged', () {
+    test('fires immediately after setValue and deleteValue', () async {
+      var changes = 0;
+      final fake = FakeMoleSource();
+      final store = MoleStore(onStorageChanged: () => changes++);
+      store.addSource(fake);
+      await _settle();
+
+      await store.setValue(fake, 'a', '1');
+      expect(changes, 1);
+
+      await store.deleteValue(fake, 'a');
+      expect(changes, 2);
+    });
+  });
+
+  group('coerceEditedValue', () {
+    test('preserves bool, int, and double types from text', () {
+      expect(coerceEditedValue('false', true), isFalse);
+      expect(coerceEditedValue('42', 7), 42);
+      expect(coerceEditedValue('3.5', 1.0), 3.5);
+    });
+
+    test('parses JSON maps and lists', () {
+      expect(
+        coerceEditedValue('{"name":"mole"}', {'name': 'old'}),
+        {'name': 'mole'},
+      );
+      expect(
+        coerceEditedValue('[1,2]', [0]),
+        [1, 2],
+      );
     });
   });
 

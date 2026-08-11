@@ -12,8 +12,11 @@ import '../sources/mole_source.dart';
 /// change, with a **debounce** so rapid writes (tight loops) batch into a
 /// single rebuild instead of rebuilding per write.
 class MoleStore extends ChangeNotifier {
-  MoleStore({Duration debounce = const Duration(milliseconds: 200)})
-    : _debounce = debounce;
+  MoleStore({
+    Duration debounce = const Duration(milliseconds: 200),
+    VoidCallback? onStorageChanged,
+  })  : _debounce = debounce,
+        onStorageChanged = onStorageChanged;
 
   final Duration _debounce;
   final List<MoleSource> _sources = <MoleSource>[];
@@ -21,6 +24,12 @@ class MoleStore extends ChangeNotifier {
   final Map<MoleSource, StreamSubscription<List<MoleDataEntry>>> _subs = {};
   Timer? _timer;
   bool _disposed = false;
+
+  /// Called immediately after Mole writes to or deletes from real storage.
+  ///
+  /// Use this so the host app can reload UI that reads the same instances
+  /// Mole already mutates (SharedPreferences, Hive box, etc.).
+  VoidCallback? onStorageChanged;
 
   /// Registered sources, in registration order.
   List<MoleSource> get sources => List.unmodifiable(_sources);
@@ -69,7 +78,7 @@ class MoleStore extends ChangeNotifier {
     if (_disposed || _sources.contains(source)) return;
     _sources.add(source);
     _cache[source] = [];
-    // ignore: cancel_subscriptions — lifecycle managed by removeSource/dispose.
+    // ignore: cancel_subscriptions - lifecycle managed by removeSource/dispose.
     final sub = source.watch().listen(
       (entries) {
         if (_disposed) return;
@@ -98,18 +107,21 @@ class MoleStore extends ChangeNotifier {
   /// Writes a value through the store (also refreshes the source stream).
   Future<void> setValue(MoleSource source, String key, dynamic value) async {
     await source.setValue(key, value);
+    onStorageChanged?.call();
     _scheduleNotify();
   }
 
   /// Deletes a single key through the given source.
   Future<void> deleteValue(MoleSource source, String key) async {
     await source.deleteValue(key);
+    onStorageChanged?.call();
     _scheduleNotify();
   }
 
   /// Clears one source with a confirmation handled by the UI layer.
   Future<void> clearSource(MoleSource source) async {
     await source.clearAll();
+    onStorageChanged?.call();
     _scheduleNotify();
   }
 
@@ -118,6 +130,7 @@ class MoleStore extends ChangeNotifier {
     for (final source in List<MoleSource>.of(_sources)) {
       await source.clearAll();
     }
+    onStorageChanged?.call();
     _scheduleNotify();
   }
 
@@ -137,7 +150,7 @@ class MoleStore extends ChangeNotifier {
       }
       // Re-listening runs the source's on-listen snapshot again, so it pulls
       // the freshest state from the backing storage (esp. non-notifying ones).
-      // ignore: cancel_subscriptions — lifecycle managed by removeSource/dispose.
+      // ignore: cancel_subscriptions - lifecycle managed by removeSource/dispose.
       final next = source.watch().listen(
         (entries) {
           if (_disposed) return;

@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/mole_value_coercion.dart';
 import 'mole_source.dart';
 
 /// Adapts an existing [SharedPreferences] instance for inspection.
 ///
-/// Values are shown exactly as stored — no masking.
+/// Values are shown exactly as stored - no masking.
 ///
 /// `SharedPreferences` offers no external change notifications, so the stream
 /// refreshes when Mole itself mutates the store, and the store re-snapshots on
@@ -44,6 +45,9 @@ class MoleSharedPrefsSource implements MoleSource {
 
   @override
   Future<void> setValue(String key, dynamic value) async {
+    if (value is String && prefs.containsKey(key)) {
+      value = coerceEditedValue(value, prefs.get(key));
+    }
     if (value is String) {
       await prefs.setString(key, value);
     } else if (value is bool) {

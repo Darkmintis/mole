@@ -32,11 +32,35 @@ class _MoleDetailViewState extends State<MoleDetailView> {
   void initState() {
     super.initState();
     _revealed = !widget.entry.isSensitive;
+    widget.store.addListener(_onStore);
+  }
+
+  @override
+  void dispose() {
+    widget.store.removeListener(_onStore);
+    super.dispose();
+  }
+
+  MoleDataEntry? get _currentEntry {
+    for (final entry in widget.store.entriesOf(widget.source)) {
+      if (entry.key == widget.entry.key) return entry;
+    }
+    return null;
+  }
+
+  void _onStore() {
+    if (!mounted) return;
+    if (_currentEntry == null) {
+      Navigator.of(context).pop();
+      return;
+    }
+    setState(() {});
   }
 
   Future<void> _editValue() async {
+    final entry = _currentEntry ?? widget.entry;
     final controller = TextEditingController(
-      text: widget.entry.value?.toString() ?? '',
+      text: entry.value?.toString() ?? '',
     );
     final saved = await showDialog<String>(
       context: context,
@@ -65,17 +89,17 @@ class _MoleDetailViewState extends State<MoleDetailView> {
     );
 
     if (saved != null && mounted) {
-      await widget.store.setValue(widget.source, widget.entry.key, saved);
-      setState(() {});
+      await widget.store.setValue(widget.source, entry.key, saved);
     }
   }
 
   Future<void> _delete() async {
+    final entry = _currentEntry ?? widget.entry;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Delete?'),
-        content: Text('Delete “${widget.entry.key}”? This cannot be undone.'),
+        content: Text('Delete "${entry.key}"? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -94,15 +118,15 @@ class _MoleDetailViewState extends State<MoleDetailView> {
     );
 
     if (confirmed == true && mounted) {
-      await widget.store.deleteValue(widget.source, widget.entry.key);
-      if (mounted) Navigator.of(context).pop();
+      await widget.store.deleteValue(widget.source, entry.key);
     }
   }
 
   Future<void> _copy() async {
-    final text = widget.entry.isSensitive
+    final entry = _currentEntry ?? widget.entry;
+    final text = entry.isSensitive
         ? '(sensitive)'
-        : '${widget.entry.key} = ${widget.entry.value}';
+        : '${entry.key} = ${entry.value}';
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -112,12 +136,14 @@ class _MoleDetailViewState extends State<MoleDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final entry = _currentEntry ?? widget.entry;
+
     return MoleTheme.wrap(context, (context) {
       final scheme = Theme.of(context).colorScheme;
 
       return Scaffold(
         appBar: AppBar(
-          title: Text(widget.entry.key),
+          title: Text(entry.key),
           actions: [
             if (widget.source.type == 'secure')
               IconButton(
@@ -130,12 +156,12 @@ class _MoleDetailViewState extends State<MoleDetailView> {
                       : Icons.visibility_outlined,
                 ),
               ),
-             IconButton(
-                tooltip: 'Copy',
-                onPressed: _copy,
-                icon: const Icon(Icons.copy_rounded),
-              ),
-            if (MoleValueRenderer.canEdit(widget.entry))
+            IconButton(
+              tooltip: 'Copy',
+              onPressed: _copy,
+              icon: const Icon(Icons.copy_rounded),
+            ),
+            if (MoleValueRenderer.canEdit(entry))
               IconButton(
                 tooltip: 'Edit',
                 onPressed: _editValue,
@@ -159,7 +185,7 @@ class _MoleDetailViewState extends State<MoleDetailView> {
             ),
             const SizedBox(height: 4),
             SelectableText(
-              widget.entry.key,
+              entry.key,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 16),
@@ -169,16 +195,16 @@ class _MoleDetailViewState extends State<MoleDetailView> {
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
-            SizedBox(height: widget.entry.isSensitive ? 6 : 8),
+            SizedBox(height: entry.isSensitive ? 6 : 8),
             MoleValueRenderer(
-              entry: widget.entry,
+              entry: entry,
               revealed: _revealed,
             ),
-            if (widget.entry.isSensitive && !MoleValueRenderer.canEdit(widget.entry))
+            if (entry.isSensitive && !MoleValueRenderer.canEdit(entry))
               const SizedBox(height: 8),
-            if (widget.entry.isSensitive)
+            if (entry.isSensitive)
               Text(
-                'Sensitive value — masked by default. Use the eye icon to reveal.',
+                'Sensitive value - masked by default. Use the eye icon to reveal.',
                 style: TextStyle(
                   fontSize: 12,
                   color: scheme.onSurfaceVariant,
@@ -187,7 +213,7 @@ class _MoleDetailViewState extends State<MoleDetailView> {
             const SizedBox(height: 24),
             Row(
               children: [
-                if (MoleValueRenderer.canEdit(widget.entry)) ...[
+                if (MoleValueRenderer.canEdit(entry)) ...[
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _editValue,

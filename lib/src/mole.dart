@@ -10,7 +10,7 @@ import 'sources/mole_source.dart';
 import 'ui/mole_bubble.dart';
 import 'ui/mole_dashboard.dart';
 
-/// Mole — modern, production-safe local storage inspector for Flutter.
+/// Mole - modern, production-safe local storage inspector for Flutter.
 ///
 /// ```dart
 /// void main() {
@@ -52,23 +52,24 @@ class Mole {
 
   /// One-line install.
   ///
-  /// Pass the storage instances you already created. Mole wraps them — it
+  /// Pass the storage instances you already created. Mole wraps them - it
   /// never creates or owns storage instances itself, and only the sources you
-  /// list here appear in the inspector.
+  /// list here appear in the inspector. Edits in Mole write through to those
+  /// same instances immediately.
+  ///
+  /// Pass [onStorageChanged] so your app UI reloads when Mole mutates storage:
   ///
   /// ```dart
   /// Mole.install(
-  ///   config: const MoleConfig(),
-  ///   sources: [
-  ///     MoleSharedPrefsSource(prefs),
-  ///     MoleHiveSource(box: myBox),
-  ///     MoleSecureStorageSource(secureStorage),
-  ///   ],
+  ///   config: moleConfig,
+  ///   sources: [MoleSharedPrefsSource(prefs)],
+  ///   onStorageChanged: () => reloadMyUiFromStorage(),
   /// );
   /// ```
   static void install({
     MoleConfig config = const MoleConfig(),
     List<MoleSource> sources = const [],
+    VoidCallback? onStorageChanged,
   }) {
     _config = config;
     _activation = MoleActivation.resolve(config);
@@ -80,6 +81,7 @@ class Mole {
     }
 
     _store ??= MoleStore(debounce: config.refreshDebounce);
+    _store!.onStorageChanged = onStorageChanged;
     _engine ??= MoleEngine(store: _store!, config: config);
     _engine!.updateConfig(config);
     _engine!.attach(sources);

@@ -2,11 +2,12 @@ import 'dart:async';
 
 import 'package:hive/hive.dart';
 
+import '../core/mole_value_coercion.dart';
 import 'mole_source.dart';
 
 /// Adapts an existing Hive [Box] for inspection.
 ///
-/// Values are shown exactly as stored — no masking. The stream is derived
+/// Values are shown exactly as stored - no masking. The stream is derived
 /// from the box's change events, so external writes push live updates too.
 class MoleHiveSource implements MoleSource {
   MoleHiveSource(this.box);
@@ -47,7 +48,11 @@ class MoleHiveSource implements MoleSource {
 
   @override
   Future<void> setValue(String key, dynamic value) async {
-    await box.put(key, value);
+    dynamic toWrite = value;
+    if (value is String && box.containsKey(key)) {
+      toWrite = coerceEditedValue(value, box.get(key));
+    }
+    await box.put(key, toWrite);
     _emit();
   }
 
