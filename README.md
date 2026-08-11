@@ -1,13 +1,13 @@
 # Mole
 
-Local storage inspector for Flutter — see, edit, and clear everything your app has stored in **SharedPreferences**, **Hive**, **Secure Storage**, and more.
+Local storage inspector for Flutter - see, edit, and clear everything your app has stored in **SharedPreferences**, **Hive**, **Secure Storage**, and more.
 
 **See everything. Ship nothing you didn't mean to.**
 
 [![pub package](https://img.shields.io/pub/v/mole.svg)](https://pub.dev/packages/mole)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Mole registers the storage instances *you* pass to `Mole.install` — nothing is added automatically. Only those sources appear in the dashboard.
+Mole registers the storage instances *you* pass to `Mole.install` - nothing is added automatically. Only those sources appear in the dashboard.
 
 ## Why Mole
 
@@ -15,12 +15,12 @@ Most Flutter storage debuggers make you wire up fake mirrors or read raw files. 
 
 | | Typical tools | Mole |
 |---|---|---|
-| Setup | Adapters, mocks, polling | Register existing instances — zero adapters |
+| Setup | Adapters, mocks, polling | Register existing instances - zero adapters |
 | Sources | Usually one backend | Grouped by source: prefs · Hive · Secure |
 | Values | Read-only export | **Inline edit + delete** per key |
 | Clear | Manual | **Clear one key, one source, or everything** |
 | Release | Usually unavailable or unsafe | **Off by default** (true no-op) |
-| Release warning | Often missing | **Only when release is on** — banner + red tag |
+| Release warning | Often missing | **Only when release is on** - banner + red tag |
 
 ## Install
 
@@ -42,7 +42,7 @@ import 'package:mole/mole.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Edit this file to control Mole — copy it into your own project.
+/// Edit this file to control Mole - copy it into your own project.
 const moleConfig = MoleConfig(
   enabled: true,
   enableInRelease: false,
@@ -80,6 +80,25 @@ class MyApp extends StatelessWidget {
 ```
 
 Tap the floating bubble to open the dashboard. Sources are listed with live entry counts; tap one to browse its keys and values.
+
+## Edits write through to your app
+
+Mole mutates the **same storage instances** you register. An edit in the inspector is a real `SharedPreferences.setString`, `box.put`, etc. - not a shadow copy.
+
+Your app UI will not reload by itself. Pass `onStorageChanged` to re-read storage when Mole edits or deletes data:
+
+```dart
+Mole.install(
+  config: moleConfig,
+  sources: [MoleSharedPrefsSource(prefs)],
+  onStorageChanged: () {
+    // Re-read prefs / Hive / secure storage into your widgets.
+    reloadSettingsFromStorage();
+  },
+);
+```
+
+Edits preserve the original value type where possible (bools stay bools, JSON maps stay maps).
 
 ## Configuration
 
@@ -122,19 +141,19 @@ Mole.install(
 | Release + both on | Inspector runs with a loud console warning **and** a permanent red **MOLE ACTIVE** tag |
 | Release off | No inspector, **no warning** |
 
-Set `enabled: false` to turn Mole off completely — no bubble, no listeners, zero overhead.
+Set `enabled: false` to turn Mole off completely - no bubble, no listeners, zero overhead.
 
 When Mole is active in release, the warning is automatic and cannot be disabled separately.
 
 ## Source adapters
 
-Mole never creates or owns storage instances — pass it the ones you already have.
+Mole never creates or owns storage instances - pass it the ones you already have.
 
 | Adapter | Storage | Values |
 |---|---|---|
 | `MoleSharedPrefsSource(prefs)` | `SharedPreferences` | Full raw visibility |
 | `MoleHiveSource(box)` | Hive `Box` | Full raw visibility, live via box watch |
-| `MoleSecureStorageSource(storage)` | `flutter_secure_storage` | **Masked by default** — tap to reveal |
+| `MoleSecureStorageSource(storage)` | `flutter_secure_storage` | **Masked by default** - tap to reveal |
 
 Secure Storage values are masked in-app because they are real secrets (tokens, credentials) sitting at rest on a device. `SharedPreferences` and Hive values are shown exactly as stored.
 

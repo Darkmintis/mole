@@ -1,5 +1,5 @@
 name: mole_example
-description: Minimal Mole demo — write to SharedPreferences, Hive, Secure Storage, and cache, then inspect with the Mole bubble.
+description: Minimal Mole demo - write to SharedPreferences, Hive, Secure Storage, and cache, then inspect with the Mole bubble.
 publish_to: 'none'
 version: 1.0.0+1
 

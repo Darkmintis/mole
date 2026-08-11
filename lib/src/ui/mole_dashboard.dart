@@ -9,7 +9,7 @@ import 'mole_theme.dart';
 /// Dashboard home: list of storage sources the host app registered via
 /// [Mole.install] / [Mole.addSources], with live entry counts.
 ///
-/// Only sources explicitly passed by the developer appear here — Mole never
+/// Only sources explicitly passed by the developer appear here - Mole never
 /// auto-registers SharedPreferences, Hive, Secure Storage, or Cache.
 ///
 /// Tap a source to inspect its keys/values. Long-press or trailing button to

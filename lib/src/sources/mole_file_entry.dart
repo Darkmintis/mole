@@ -3,7 +3,7 @@
 /// Instances are produced by [MoleCacheSource] via a platform shim. The
 /// absolute [path] is retained so the UI can read thumbnail bytes on demand
 /// (lazily), but Mole itself never modifies these files except through the
-/// explicit delete/clear actions — it never creates, owns, or writes to the
+/// explicit delete/clear actions - it never creates, owns, or writes to the
 /// cache layer.
 class MoleFileEntry {
   const MoleFileEntry({

@@ -1,4 +1,4 @@
-/// Mole — local storage inspector for Flutter.
+/// Mole - local storage inspector for Flutter.
 ///
 /// See, edit, and clear everything your app has stored in
 /// SharedPreferences, Hive, Secure Storage, and more.

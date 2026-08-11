@@ -69,7 +69,7 @@ void main() {
 
       expect(store.entriesOf(fake).length, 1);
 
-      // Host app writes straight to storage — no stream emit, so the store
+      // Host app writes straight to storage - no stream emit, so the store
       // (and dashboard) still show the stale snapshot.
       fake.seed('more', 'v2');
       await _settle();

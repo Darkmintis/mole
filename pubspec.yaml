@@ -1,6 +1,6 @@
 name: mole
 description: >-
-  Local storage inspector for Flutter — see, edit, and clear everything your
+  Local storage inspector for Flutter - see, edit, and clear everything your
   app has stored in SharedPreferences, Hive, Secure Storage, and caches.
 version: 0.1.0
 homepage: https://darkmintis.dev/mole

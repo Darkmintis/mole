@@ -5,7 +5,7 @@ import 'mole_file_entry.dart';
 /// Web / unsupported-platform stub for cache browsing.
 ///
 /// Cache inspection relies on a real filesystem, so it is intentionally a
-/// no-op here — registering [MoleCacheSource] on the web surfaces an empty
+/// no-op here - registering [MoleCacheSource] on the web surfaces an empty
 /// source rather than crashing at import time.
 
 Never _unsupported(String action) => throw UnsupportedError(

@@ -1,6 +1,6 @@
 import 'package:mole/mole.dart';
 
-/// App-wide Mole settings — edit this file to change inspector behavior.
+/// App-wide Mole settings - edit this file to change inspector behavior.
 ///
 /// Copy this file into your own project and adjust the values below.
 const moleConfig = MoleConfig(

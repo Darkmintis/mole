@@ -12,12 +12,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// Every section of the demo screen (see §10 of MOLE_PLAN.md) writes to a real
 /// source:
-/// - SharedPreferences — three separate pref keys (name / dark_mode /
+/// - SharedPreferences - three separate pref keys (name / dark_mode /
 ///   notifications).
-/// - Secure Storage — a fake `auth_token` (demonstrates masked display).
-/// - Hive — a nested `Map` profile PLUS raw `Uint8List` bytes read from the
+/// - Secure Storage - a fake `auth_token` (demonstrates masked display).
+/// - Hive - a nested `Map` profile PLUS raw `Uint8List` bytes read from the
 ///   bundled `assets/profile.png` (proves the image-thumbnail path).
-/// - Cache — a profile image file written under the app's temporary directory
+/// - Cache - a profile image file written under the app's temporary directory
 ///   so `MoleCacheSource` has a real, inspectable/deletable file.
 class StorageService {
   StorageService._();
@@ -49,7 +49,7 @@ class StorageService {
     };
   }
 
-  /// Writes each form field as its own pref key — §10 SharedPreferences section.
+  /// Writes each form field as its own pref key - §10 SharedPreferences section.
   static Future<void> savePrefs(
     SharedPreferences prefs, {
     required String name,
@@ -61,7 +61,7 @@ class StorageService {
     await prefs.setBool('notifications', notifications);
   }
 
-  /// Fake login — Secure Storage section.
+  /// Fake login - Secure Storage section.
   static Future<void> login() async {
     await secure.write(key: tokenKey, value: 'fake-token-abc123');
   }

@@ -1,7 +1,7 @@
 /// Configuration for [Mole.install].
 ///
 /// Copy this pattern into your app (e.g. `lib/mole_config.dart`) and adjust
-/// the values once — then pass [moleConfig] to [Mole.install].
+/// the values once - then pass [moleConfig] to [Mole.install].
 ///
 /// ```dart
 /// // lib/mole_config.dart
@@ -20,7 +20,7 @@
 /// | Debug / Profile | [enabled] is `true` (default) |
 /// | Release | [enabled] **and** [enableInRelease] are both `true` |
 ///
-/// Set [enabled] to `false` to turn Mole off entirely — no bubble, no
+/// Set [enabled] to `false` to turn Mole off entirely - no bubble, no
 /// inspection, zero overhead.
 ///
 /// ### Release warning
@@ -55,7 +55,7 @@ class MoleConfig {
     this.cacheSizeWarningThresholdMB = 50,
   });
 
-  /// Mole fully off — no bubble, no listeners, zero overhead.
+  /// Mole fully off - no bubble, no listeners, zero overhead.
   static const disabled = MoleConfig(enabled: false);
 
   MoleConfig copyWith({

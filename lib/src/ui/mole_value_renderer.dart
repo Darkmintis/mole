@@ -120,7 +120,7 @@ class _Compact extends StatelessWidget {
 
     if (value is Uint8List) {
       return Text(
-        'Binary — ${(value as Uint8List).lengthInBytes} bytes',
+        'Binary - ${(value as Uint8List).lengthInBytes} bytes',
         style: style,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
@@ -252,7 +252,7 @@ class _BytesDetail extends StatelessWidget {
 
   Widget _hexPreview(Uint8List bytes) {
     final preview = bytes.take(32);
-    final buffer = StringBuffer()..write('Binary data — ${bytes.lengthInBytes} bytes\n');
+    final buffer = StringBuffer()..write('Binary data - ${bytes.lengthInBytes} bytes\n');
     var i = 0;
     for (final b in preview) {
       if (i % 8 == 0 && i != 0) {

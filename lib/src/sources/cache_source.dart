@@ -12,7 +12,7 @@ import 'mole_source.dart';
 /// - **Zero config**: with no arguments it inspects the app's temporary
 ///   directory (the same directory the OS and cache packages use). Pass
 ///   [directoryPath] (mainly for tests) to inspect somewhere else.
-/// - **Never creates, owns, or writes** to the cache layer — Mole only ever
+/// - **Never creates, owns, or writes** to the cache layer - Mole only ever
 ///   lists, deletes individual files, or clears the directory on explicit user
 ///   command.
 /// - **Read / delete only**: [setValue] throws, because files are never edited

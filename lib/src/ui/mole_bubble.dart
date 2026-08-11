@@ -6,12 +6,12 @@ import 'mole_theme.dart';
 
 /// Floating draggable bubble. Tap opens the Mole dashboard.
 ///
-/// Follows the §3b spec — **no persistent count**. Storage writes are
+/// Follows the §3b spec - **no persistent count**. Storage writes are
 /// occasional, not a stream, so a number would be meaningless noise:
 ///
 /// - **Default state**: a database/cylinder icon.
 /// - **Pulse-on-write**: brief ~500ms opacity/scale glow whenever any
-///   registered source changes. No number — just a visual pulse.
+///   registered source changes. No number - just a visual pulse.
 /// - **Warning badge**: a small red dot appears **only if** total cache size
 ///   crosses [MoleConfig.cacheSizeWarningThresholdMB].
 ///
@@ -42,10 +42,10 @@ class _MoleBubbleState extends State<MoleBubble>
   static const _pulseDuration = Duration(milliseconds: 500);
 
   /// How far above the *exact* bottom-right corner the bubble sits by default
-  /// — clear of a typical floating action button (~56px + 16px gap).
+  /// - clear of a typical floating action button (~56px + 16px gap).
   static const _cornerMargin = 80.0;
 
-  /// Current offset (top-left). `null` until the user drags — while null the
+  /// Current offset (top-left). `null` until the user drags - while null the
   /// bubble sits a little above the bottom-right corner (§3b default).
   Offset? _offset;
 
@@ -94,7 +94,7 @@ class _MoleBubbleState extends State<MoleBubble>
     return widget.store.totalCacheBytes >= thresholdBytes;
   }
 
-  /// Small red dot pinned to the top-right corner — shown only when total
+  /// Small red dot pinned to the top-right corner - shown only when total
   /// cache size crosses the §3b threshold. Added to the bubble's inner stack.
   Widget _warningDot(ColorScheme scheme) {
     return Positioned(

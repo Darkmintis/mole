@@ -34,7 +34,7 @@ class MoleActivation {
       return const MoleActivation(active: true, showReleaseWarning: true);
     }
 
-    // debug / profile — on when enabled, no release warning
+    // debug / profile - on when enabled, no release warning
     return const MoleActivation(active: true, showReleaseWarning: false);
   }
 }
