@@ -103,13 +103,29 @@ void main() {
       expect(on.showReleaseWarning, isTrue);
     });
 
-    test('release warning cannot be disabled when active in release', () {
+    test('enabled false turns off release even when enableInRelease is true', () {
+      final off = MoleActivation.resolve(
+        const MoleConfig(enabled: false, enableInRelease: true),
+        isReleaseMode: true,
+      );
+      expect(off.active, isFalse);
+      expect(off.showReleaseWarning, isFalse);
+    });
+
+    test('release warning only when active in release', () {
       final on = MoleActivation.resolve(
         const MoleConfig(enableInRelease: true),
         isReleaseMode: true,
       );
       expect(on.active, isTrue);
       expect(on.showReleaseWarning, isTrue);
+
+      final off = MoleActivation.resolve(
+        const MoleConfig(enableInRelease: false),
+        isReleaseMode: true,
+      );
+      expect(off.active, isFalse);
+      expect(off.showReleaseWarning, isFalse);
     });
   });
 
