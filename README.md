@@ -142,7 +142,7 @@ Secure Storage values are masked in-app because they are real secrets (tokens, c
 
 - One-line `Mole.install(config:, sources:)`
 - Built-in adapters for SharedPreferences, Hive, Secure Storage
-- Floating draggable bubble (dimmed when empty, hidden while inspector is open)
+- Floating draggable bubble (hidden while the inspector is open)
 - Dashboard: grouped sources with live entry counts
 - Live key/value tables per source
 - Per-entry **edit** and **delete**

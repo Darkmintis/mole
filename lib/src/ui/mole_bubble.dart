@@ -9,8 +9,7 @@ import 'mole_theme.dart';
 /// Follows the §3b spec — **no persistent count**. Storage writes are
 /// occasional, not a stream, so a number would be meaningless noise:
 ///
-/// - **Empty state**: dimmed when no entries exist across registered sources.
-/// - **Active state**: full contrast when any source has data.
+/// - **Default state**: a database/cylinder icon.
 /// - **Pulse-on-write**: brief ~500ms opacity/scale glow whenever any
 ///   registered source changes. No number — just a visual pulse.
 /// - **Warning badge**: a small red dot appears **only if** total cache size
@@ -85,13 +84,10 @@ class _MoleBubbleState extends State<MoleBubble>
     // Skip the initial snapshot so the bubble doesn't glow on first build.
     if (!_pulsedOnce) {
       _pulsedOnce = true;
-    } else {
-      _pulse.forward(from: 0);
+      return;
     }
-    setState(() {});
+    _pulse.forward(from: 0);
   }
-
-  bool get _hasData => widget.store.totalEntries > 0;
 
   bool get _cacheOverThreshold {
     final thresholdBytes = widget.config.cacheSizeWarningThresholdMB * 1024 * 1024;
@@ -138,8 +134,6 @@ class _MoleBubbleState extends State<MoleBubble>
         final scheme = Theme.of(context).colorScheme;
         final background = scheme.inverseSurface;
         final foreground = scheme.onInverseSurface;
-        final idleOpacity = _hasData ? 1.0 : 0.38;
-        final elevation = _hasData ? 3.0 : 0.5;
 
         return Column(
           mainAxisSize: MainAxisSize.min,
@@ -183,30 +177,25 @@ class _MoleBubbleState extends State<MoleBubble>
                 scale: _scale,
                 child: FadeTransition(
                   opacity: _opacity,
-                  child: AnimatedOpacity(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOut,
-                    opacity: idleOpacity,
-                    child: Material(
-                      color: background,
-                      elevation: elevation,
-                      shadowColor: Colors.black38,
-                      borderRadius: BorderRadius.circular(_radius),
-                      clipBehavior: Clip.antiAlias,
-                      child: SizedBox(
-                        width: _size,
-                        height: _size,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Icon(
-                              Icons.storage_rounded,
-                              size: 28,
-                              color: foreground,
-                            ),
-                            if (_cacheOverThreshold) _warningDot(scheme),
-                          ],
-                        ),
+                  child: Material(
+                    color: background,
+                    elevation: 3,
+                    shadowColor: Colors.black38,
+                    borderRadius: BorderRadius.circular(_radius),
+                    clipBehavior: Clip.antiAlias,
+                    child: SizedBox(
+                      width: _size,
+                      height: _size,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Icon(
+                            Icons.storage_rounded,
+                            size: 28,
+                            color: foreground,
+                          ),
+                          if (_cacheOverThreshold) _warningDot(scheme),
+                        ],
                       ),
                     ),
                   ),
