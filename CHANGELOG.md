@@ -1,3 +1,7 @@
+## 0.1.1
+
+* Upgrade `flutter_secure_storage` to ^11.0.0
+
 ## 0.1.0
 
 * Initial release: local storage inspector for Flutter.

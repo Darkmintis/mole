@@ -2,7 +2,7 @@ name: mole
 description: >-
   Local storage inspector for Flutter - see, edit, and clear everything your
   app has stored in SharedPreferences, Hive, Secure Storage, and caches.
-version: 0.1.0
+version: 0.1.1
 homepage: https://darkmintis.dev/mole
 repository: https://github.com/darkmintis/mole
 issue_tracker: https://github.com/darkmintis/mole/issues
@@ -19,7 +19,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_secure_storage: ^9.2.4
+  flutter_secure_storage: ^11.0.0
   hive: ^2.2.3
   path_provider: ^2.1.4
   shared_preferences: ^2.3.4
