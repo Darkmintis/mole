@@ -5,21 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/storage_service.dart';
 
 /// One single form-based demo screen that exercises all 4 registered sources.
-///
-/// This is the proof Mole is a *live window into storage*, not a snapshot.
-/// Documented two-way test flow (see §10b of MOLE_PLAN.md):
-///
-/// 1. Fill the form, tap each Save/Login/Cache button → open the Mole bubble →
-///    confirm all 4 sources show the new data.
-/// 2. In Mole, edit one SharedPreferences value directly → return here and tap
-///    **Reload from storage** (or restart the app) → the fields must show the
-///    edited value. This proves Mole writes through to real storage.
-/// 3. Repeat the edit check for the Hive entry (a non-binary field like
-///    `profile.name`) and confirm it also writes through.
-/// 4. Delete a key from Mole (in each of Prefs, Secure Storage, Hive) →
-///    confirm the app reflects the default/empty state on next read.
-/// 5. Delete the cached image file from Mole → confirm it's gone from disk /
-///    the app re-downloads it if reloaded.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
@@ -28,8 +13,6 @@ class HomeScreen extends StatefulWidget {
     this.storageRevision,
   });
 
-  /// Provide the already-registered instances so edits in Mole echo back.
-  /// When null (widget tests), the screen resolves its own instances.
   final SharedPreferences? prefs;
   final Box? box;
   final ValueNotifier<int>? storageRevision;
@@ -46,8 +29,15 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _darkMode = false;
   bool _notifications = false;
 
-  String _status = 'Fill the form, save, then open the Mole bubble';
+  String? _prefsNotice;
+  String? _secureNotice;
+  String? _hiveNotice;
+  String? _cacheNotice;
+
   bool _busy = false;
+
+  bool get _prefsReady => _prefs != null;
+  bool get _hiveReady => _box != null;
 
   @override
   void initState() {
@@ -64,27 +54,46 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onMoleStorageChanged() {
-    if (!mounted || _prefs == null) return;
-    _loadIntoForm();
-    setState(
-      () => _status = 'Form synced - storage was edited in Mole.',
-    );
+    if (!mounted) return;
+    if (_prefs != null) {
+      _loadIntoForm();
+      _prefsNotice =
+          'Updated from Mole - form reloaded from SharedPreferences.';
+    }
+    _secureNotice =
+        'Updated from Mole - check auth_token in Secure Storage.';
+    _hiveNotice = 'Updated from Mole - check profile keys in Hive.';
+    _cacheNotice = 'Updated from Mole - rescan Cache in the inspector.';
+    setState(() {});
   }
 
   Future<void> _init() async {
-    final prefs = widget.prefs ?? await _resolvePrefs();
+    final prefsFuture = widget.prefs != null
+        ? Future<SharedPreferences?>.value(widget.prefs)
+        : _resolvePrefs();
+    final boxFuture = widget.box != null
+        ? Future<Box?>.value(widget.box)
+        : _resolveBox();
+    final results = await Future.wait<Object?>([
+      prefsFuture,
+      boxFuture,
+    ]);
     if (!mounted) return;
+
+    final prefs = results[0] as SharedPreferences?;
+    final box = results[1] as Box?;
+
     setState(() {
       _prefs = prefs;
-      _loadIntoForm();
+      _box = box;
     });
-    // Box resolution is optional; it may not exist in widget tests.
-    final box = widget.box ?? await _resolveBox();
-    if (!mounted || box == null) return;
-    setState(() => _box = box);
+
+    if (prefs != null) {
+      _loadIntoForm();
+      if (mounted) setState(() {});
+    }
   }
 
-  /// Tests use `SharedPreferences.setMockInitialValues`; resolve if not passed.
   Future<SharedPreferences?> _resolvePrefs() async {
     try {
       return await SharedPreferences.getInstance();
@@ -93,8 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Opens the demo Hive box. Fails silently when plugins are unavailable
-  /// (e.g. widget tests) - the demo screen then just can't write to Hive.
   Future<Box?> _resolveBox() async {
     try {
       return await StorageService.openBox();
@@ -103,72 +110,91 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Re-reads current storage values into the form controls - this is what
-  /// proves Mole's edits/deletes "write through" to the app (§10b steps 2-5).
   void _loadIntoForm() {
-    final current = _prefs == null
-        ? const <String, Object?>{}
-        : StorageService.currentPrefs(_prefs!);
-    _nameController.text = (current['name'] as String?) ?? '';
-    _darkMode = (current['dark_mode'] as bool?) ?? false;
-    _notifications = (current['notifications'] as bool?) ?? false;
+    if (_prefs == null) return;
+    final current = StorageService.currentPrefs(_prefs!);
+    _nameController.text = StorageService.readString(current['name']);
+    _darkMode = StorageService.readBool(current['dark_mode']);
+    _notifications = StorageService.readBool(current['notifications']);
   }
 
-  Future<void> _run(String label, Future<void> Function() action) async {
+  Future<void> _runSection({
+    required String label,
+    required Future<void> Function() action,
+    required void Function(String message) setNotice,
+    required String successMessage,
+  }) async {
     if (_busy) return;
-    setState(() {
-      _busy = true;
-      _status = '$label…';
-    });
+    setState(() => _busy = true);
     try {
       await action();
       if (!mounted) return;
-      setState(() => _status = '$label done - open the Mole bubble to inspect.');
+      setState(() => setNotice(successMessage));
     } on Object catch (e) {
       if (!mounted) return;
-      setState(() => _status = '$label failed: $e');
+      setState(() => setNotice('$label failed: $e'));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _savePrefs() => _run(
-    'Saving preferences',
-    () => StorageService.savePrefs(
-      _prefs!,
-      name: _nameController.text.trim(),
-      darkMode: _darkMode,
-      notifications: _notifications,
-    ),
-  );
+  Future<void> _savePrefs() => _runSection(
+        label: 'Save preferences',
+        action: () => StorageService.savePrefs(
+          _prefs!,
+          name: _nameController.text.trim(),
+          darkMode: _darkMode,
+          notifications: _notifications,
+        ),
+        setNotice: (message) => _prefsNotice = message,
+        successMessage:
+            'SharedPreferences saved (name, dark_mode, notifications). '
+            'Open Mole to inspect.',
+      );
 
-  Future<void> _login() =>
-      _run('Logging in', () => StorageService.login());
+  Future<void> _login() => _runSection(
+        label: 'Login',
+        action: StorageService.login,
+        setNotice: (message) => _secureNotice = message,
+        successMessage:
+            'auth_token written to Secure Storage. '
+            'It is masked in Mole until you tap reveal.',
+      );
 
-  Future<void> _saveProfile() => _run(
-    'Saving profile',
-    () => StorageService.saveProfile(_box!),
-  );
+  Future<void> _saveProfile() => _runSection(
+        label: 'Save profile',
+        action: () => StorageService.saveProfile(_box!),
+        setNotice: (message) => _hiveNotice = message,
+        successMessage:
+            'Hive profile map + image bytes saved. '
+            'Open Mole to browse thumbnails.',
+      );
 
-  Future<void> _saveCache() =>
-      _run('caching sample image', () => StorageService.writeCache());
+  Future<void> _saveCache() => _runSection(
+        label: 'Cache image',
+        action: StorageService.writeCache,
+        setNotice: (message) => _cacheNotice = message,
+        successMessage:
+            'profile.png and summary.json written to the app cache dir. '
+            'Open Mole Cache source to view them.',
+      );
 
   @override
   Widget build(BuildContext context) {
-    final ready = _prefs != null && _box != null;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Mole Demo - Storage Playground'),
+        title: const Text('Mole Demo - Storage Playground'),
         actions: [
           IconButton(
             tooltip: 'Reload from storage',
-            onPressed: ready
-                ? () => setState(() {
-                      _loadIntoForm();
-                      _status =
-                          'Reloaded - values now reflect what Mole has stored.';
-                    })
+            onPressed: _prefsReady
+                ? () {
+                    _loadIntoForm();
+                    setState(() {
+                      _prefsNotice =
+                          'Reloaded from SharedPreferences.';
+                    });
+                  }
                 : null,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -188,18 +214,16 @@ class _HomeScreenState extends State<HomeScreen> {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-
           _SectionCard(
             title: 'SharedPreferences',
             icon: Icons.tune_rounded,
             color: const Color(0xFF1B6B4A),
-            enabled: ready,
             child: Column(
               children: [
                 _label(context, 'Name'),
                 TextField(
                   controller: _nameController,
-                  enabled: ready,
+                  enabled: _prefsReady && !_busy,
                   decoration: const InputDecoration(
                     hintText: 'e.g. Mole',
                     border: OutlineInputBorder(),
@@ -210,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Dark mode'),
                   value: _darkMode,
-                  onChanged: ready
+                  onChanged: _prefsReady && !_busy
                       ? (v) => setState(() => _darkMode = v)
                       : null,
                 ),
@@ -218,28 +242,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('Notifications'),
                   value: _notifications,
-                  onChanged: ready
+                  onChanged: _prefsReady && !_busy
                       ? (v) => setState(() => _notifications = v)
                       : null,
                 ),
                 Align(
                   alignment: Alignment.centerRight,
                   child: _button(
-                    context,
                     label: 'Save',
                     icon: Icons.save_outlined,
-                    onPressed: ready ? _savePrefs : null,
+                    onPressed: _prefsReady && !_busy ? _savePrefs : null,
                   ),
                 ),
               ],
             ),
           ),
+          _SectionNotice(message: _prefsNotice),
           const SizedBox(height: 8),
           _SectionCard(
             title: 'Secure Storage',
             icon: Icons.lock_outline_rounded,
             color: const Color(0xFF6A1B9A),
-            enabled: ready,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -250,21 +273,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: _button(
-                    context,
                     label: 'Login',
                     icon: Icons.login_rounded,
-                    onPressed: ready ? _login : null,
+                    onPressed: !_busy ? _login : null,
                   ),
                 ),
               ],
             ),
           ),
+          _SectionNotice(message: _secureNotice),
           const SizedBox(height: 8),
           _SectionCard(
             title: 'Hive',
             icon: Icons.storage_rounded,
             color: const Color(0xFF1565C0),
-            enabled: ready,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -276,21 +298,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: _button(
-                    context,
                     label: 'Save Profile',
                     icon: Icons.person_outline_rounded,
-                    onPressed: ready ? _saveProfile : null,
+                    onPressed: _hiveReady && !_busy ? _saveProfile : null,
                   ),
                 ),
               ],
             ),
           ),
+          _SectionNotice(message: _hiveNotice),
           const SizedBox(height: 8),
           _SectionCard(
             title: 'Cache',
             icon: Icons.folder_open_rounded,
             color: const Color(0xFFB67420),
-            enabled: ready,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -302,47 +323,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: _button(
-                    context,
                     label: 'Cache image',
                     icon: Icons.cloud_download_outlined,
-                    onPressed: ready ? _saveCache : null,
+                    onPressed: !_busy ? _saveCache : null,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(_status, style: Theme.of(context).textTheme.bodySmall),
+          _SectionNotice(message: _cacheNotice),
         ],
       ),
     );
   }
 
-  Widget _label(BuildContext context, String text, [String? second]) {
+  Widget _label(BuildContext context, String text) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
-      child: Text.rich(
-        TextSpan(
-          text: text,
-          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
-          children: [
-            if (second != null)
-              TextSpan(
-                text: second,
-                style: TextStyle(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-          ],
-        ),
+      child: Text(
+        text,
+        style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
       ),
     );
   }
 
-  Widget _button(
-    BuildContext context, {
+  Widget _button({
     required String label,
     required IconData icon,
     VoidCallback? onPressed,
@@ -360,14 +366,12 @@ class _SectionCard extends StatelessWidget {
     required this.title,
     required this.icon,
     required this.color,
-    required this.enabled,
     required this.child,
   });
 
   final String title;
   final IconData icon;
   final Color color;
-  final bool enabled;
   final Widget child;
 
   @override
@@ -400,6 +404,30 @@ class _SectionCard extends StatelessWidget {
             child,
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionNotice extends StatelessWidget {
+  const _SectionNotice({this.message});
+
+  final String? message;
+
+  @override
+  Widget build(BuildContext context) {
+    if (message == null || message!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 4, right: 4),
+      child: Text(
+        message!,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: scheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }

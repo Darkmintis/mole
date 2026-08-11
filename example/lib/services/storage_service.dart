@@ -40,13 +40,29 @@ class StorageService {
   }
 
   /// Reads the current preferences so the form can pre-fill from real storage
-  /// (and reflect edits Mole made).
+  /// (and reflect edits Mole made). Uses [SharedPreferences.get] so mixed
+  /// types from inspector edits do not crash typed getters.
   static Map<String, Object?> currentPrefs(SharedPreferences prefs) {
     return {
-      'name': prefs.getString('name'),
-      'dark_mode': prefs.getBool('dark_mode'),
-      'notifications': prefs.getBool('notifications'),
+      'name': prefs.get('name'),
+      'dark_mode': prefs.get('dark_mode'),
+      'notifications': prefs.get('notifications'),
     };
+  }
+
+  static String readString(Object? value) {
+    if (value == null) return '';
+    return value.toString();
+  }
+
+  static bool readBool(Object? value) {
+    if (value is bool) return value;
+    if (value is String) {
+      final lower = value.trim().toLowerCase();
+      if (lower == 'true') return true;
+      if (lower == 'false') return false;
+    }
+    return false;
   }
 
   /// Writes each form field as its own pref key - §10 SharedPreferences section.
