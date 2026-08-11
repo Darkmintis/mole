@@ -1,27 +1,44 @@
 /// Configuration for [Mole.install].
 ///
-/// Defaults are safe for day-one install: on in debug/profile, off in release
-/// unless [enableInRelease] is explicitly set.
+/// Copy this pattern into your app (e.g. `lib/mole_config.dart`) and adjust
+/// the values once — then pass [moleConfig] to [Mole.install].
 ///
-/// When Mole is active in a release build, the console banner and red
-/// on-screen tag are **always** shown and cannot be disabled.
+/// ```dart
+/// // lib/mole_config.dart
+/// import 'package:mole/mole.dart';
+///
+/// const moleConfig = MoleConfig(
+///   enabled: true,
+///   enableInRelease: false,
+/// );
+/// ```
+///
+/// ### When is Mole active?
+///
+/// | Build mode | Active when |
+/// |---|---|
+/// | Debug / Profile | [enabled] is `true` (default) |
+/// | Release | [enabled] **and** [enableInRelease] are both `true` |
+///
+/// Set [enabled] to `false` to turn Mole off entirely — no bubble, no
+/// inspection, zero overhead.
+///
+/// ### Release warning
+///
+/// When Mole is active in a release build, a console banner and a permanent
+/// red **MOLE ACTIVE** tag are always shown. There is no warning when Mole is
+/// off in release.
 class MoleConfig {
-  /// Master switch. When `false`, Mole is a no-op even in debug.
+  /// Master switch. When `false`, Mole is a no-op in every build mode.
+  ///
+  /// Set this to `false` to hide the floating bubble and disable inspection.
   final bool enabled;
 
-  /// Explicit opt-in to run in release builds. Default `false`.
+  /// Opt-in to run in release builds. Default `false`.
   ///
-  /// When `true`, Mole always prints a loud console warning and shows a
-  /// permanent red "MOLE ACTIVE" tag. That warning cannot be turned off.
+  /// Has no effect unless [enabled] is also `true`. When both are `true` in a
+  /// release build, Mole runs and always shows the release warning.
   final bool enableInRelease;
-
-  /// Whether the release-mode on-screen tag is shown.
-  ///
-  /// Always `true` when [enableInRelease] is set — never configurable down.
-  final bool showReleaseWarning;
-
-  /// Floating bubble starts minimized.
-  final bool startMinimized;
 
   /// Minimum gap between UI refreshes while a source is being written to
   /// rapidly. Prevents rebuilding on every single write in a tight loop.
@@ -29,33 +46,27 @@ class MoleConfig {
 
   /// Total cache size (across all [MoleCacheSource] directories) in MB that,
   /// when exceeded, shows a small red warning dot on the floating bubble.
-  ///
-  /// See plan §3b: the red dot is a **useful signal**, not decoration — Mole's
-  /// bubble never shows a persistent count. Default: `50`.
   final int cacheSizeWarningThresholdMB;
 
   const MoleConfig({
     this.enabled = true,
     this.enableInRelease = false,
-    this.showReleaseWarning = true,
-    this.startMinimized = true,
     this.refreshDebounce = const Duration(milliseconds: 200),
     this.cacheSizeWarningThresholdMB = 50,
   });
 
+  /// Mole fully off — no bubble, no listeners, zero overhead.
+  static const disabled = MoleConfig(enabled: false);
+
   MoleConfig copyWith({
     bool? enabled,
     bool? enableInRelease,
-    bool? showReleaseWarning,
-    bool? startMinimized,
     Duration? refreshDebounce,
     int? cacheSizeWarningThresholdMB,
   }) {
     return MoleConfig(
       enabled: enabled ?? this.enabled,
       enableInRelease: enableInRelease ?? this.enableInRelease,
-      showReleaseWarning: showReleaseWarning ?? this.showReleaseWarning,
-      startMinimized: startMinimized ?? this.startMinimized,
       refreshDebounce: refreshDebounce ?? this.refreshDebounce,
       cacheSizeWarningThresholdMB:
           cacheSizeWarningThresholdMB ?? this.cacheSizeWarningThresholdMB,
@@ -67,8 +78,6 @@ class MoleConfig {
     return 'MoleConfig('
         'enabled: $enabled, '
         'enableInRelease: $enableInRelease, '
-        'showReleaseWarning: $showReleaseWarning, '
-        'startMinimized: $startMinimized, '
         'refreshDebounce: $refreshDebounce, '
         'cacheSizeWarningThresholdMB: $cacheSizeWarningThresholdMB'
         ')';
