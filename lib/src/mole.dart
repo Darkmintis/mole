@@ -171,12 +171,20 @@ class Mole {
   }
 
   static Widget _bubble() {
-    return MoleBubble(
-      store: _store!,
-      config: _config,
-      showReleaseTag: _activation.showReleaseWarning,
-      onOpen: () {
-        unawaited(openDashboard());
+    return ListenableBuilder(
+      listenable: _inspectorOpen,
+      builder: (context, _) {
+        if (_inspectorOpen.value) {
+          return const SizedBox.shrink();
+        }
+        return MoleBubble(
+          store: _store!,
+          config: _config,
+          showReleaseTag: _activation.showReleaseWarning,
+          onOpen: () {
+            unawaited(openDashboard());
+          },
+        );
       },
     );
   }

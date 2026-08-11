@@ -117,7 +117,7 @@ Mole.install(
 
 | Mode | Behavior |
 |---|---|
-| Debug / Profile | On when `enabled: true` (default). Floating bubble always visible. |
+| Debug / Profile | On when `enabled: true` (default). Bubble hidden while inspector is open. |
 | Release | Off unless `enabled: true` **and** `enableInRelease: true` |
 | Release + both on | Inspector runs with a loud console warning **and** a permanent red **MOLE ACTIVE** tag |
 | Release off | No inspector, **no warning** |
@@ -142,7 +142,7 @@ Secure Storage values are masked in-app because they are real secrets (tokens, c
 
 - One-line `Mole.install(config:, sources:)`
 - Built-in adapters for SharedPreferences, Hive, Secure Storage
-- Floating draggable bubble (always visible when enabled)
+- Floating draggable bubble (hidden while the inspector is open)
 - Dashboard: grouped sources with live entry counts
 - Live key/value tables per source
 - Per-entry **edit** and **delete**
