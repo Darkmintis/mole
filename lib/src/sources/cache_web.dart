@@ -13,7 +13,8 @@ Never _unsupported(String action) => throw UnsupportedError(
   'Cache browsing requires a filesystem-backed device.',
 );
 
-Future<String> moleTempPath() => Future.sync(() => _unsupported('read cache directory'));
+Future<String> moleTempPath() =>
+    Future.sync(() => _unsupported('read cache directory'));
 
 Future<List<MoleFileEntry>> listFiles(String absoluteDir) =>
     Future.value(const <MoleFileEntry>[]);

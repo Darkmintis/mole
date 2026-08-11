@@ -6,6 +6,7 @@ import '../config/mole_config.dart';
 ///
 /// Extracted for unit testing without depending on [kReleaseMode] alone.
 class MoleActivation {
+  /// Creates an activation snapshot for tests or custom wiring.
   const MoleActivation({
     required this.active,
     required this.showReleaseWarning,

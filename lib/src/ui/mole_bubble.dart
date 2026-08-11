@@ -18,6 +18,7 @@ import 'mole_theme.dart';
 /// The pulse runs on the [AnimationController] it owns locally; it never
 /// rebuilds the dashboard or source views, keeping §6 near-zero overhead.
 class MoleBubble extends StatefulWidget {
+  /// Creates the floating Mole bubble overlay.
   const MoleBubble({
     super.key,
     required this.store,
@@ -26,9 +27,14 @@ class MoleBubble extends StatefulWidget {
     required this.onOpen,
   });
 
+  /// Live store used for pulse-on-write and cache-size warning dot.
   final MoleStore store;
+
+  /// Bubble behavior thresholds (cache warning, etc.).
   final MoleConfig config;
   final bool showReleaseTag;
+
+  /// Called when the user taps the bubble to open the inspector.
   final VoidCallback onOpen;
 
   @override
@@ -90,7 +96,8 @@ class _MoleBubbleState extends State<MoleBubble>
   }
 
   bool get _cacheOverThreshold {
-    final thresholdBytes = widget.config.cacheSizeWarningThresholdMB * 1024 * 1024;
+    final thresholdBytes =
+        widget.config.cacheSizeWarningThresholdMB * 1024 * 1024;
     return widget.store.totalCacheBytes >= thresholdBytes;
   }
 
@@ -118,7 +125,8 @@ class _MoleBubbleState extends State<MoleBubble>
 
     // Default position: bottom-right but a little above the exact corner, so
     // it doesn't overlap a floating action button / system gesture bar.
-    final position = _offset ??
+    final position =
+        _offset ??
         Offset(
           media.size.width - _size - 16,
           media.size.height - _size - _cornerMargin,

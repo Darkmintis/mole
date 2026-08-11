@@ -15,8 +15,8 @@ class MoleStore extends ChangeNotifier {
   MoleStore({
     Duration debounce = const Duration(milliseconds: 200),
     VoidCallback? onStorageChanged,
-  })  : _debounce = debounce,
-        onStorageChanged = onStorageChanged;
+  }) : _debounce = debounce,
+       onStorageChanged = onStorageChanged;
 
   final Duration _debounce;
   final List<MoleSource> _sources = <MoleSource>[];

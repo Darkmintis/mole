@@ -59,10 +59,7 @@ void main() {
 
     test('setValue is unsupported (files are view/delete only)', () {
       final source = MoleCacheSource(directoryPath: temp.path);
-      expect(
-        () => source.setValue('k', 'v'),
-        throwsA(isA<UnsupportedError>()),
-      );
+      expect(() => source.setValue('k', 'v'), throwsA(isA<UnsupportedError>()));
     });
   });
 
@@ -76,7 +73,18 @@ void main() {
       );
       expect(
         MoleValueRenderer.canEdit(
-          const MoleDataEntry(key: 'f', value: MoleFileEntry(name: 'x', path: '/x', size: 0, modified: null, mimeType: '', isImage: false), sourceType: 'cache'),
+          const MoleDataEntry(
+            key: 'f',
+            value: MoleFileEntry(
+              name: 'x',
+              path: '/x',
+              size: 0,
+              modified: null,
+              mimeType: '',
+              isImage: false,
+            ),
+            sourceType: 'cache',
+          ),
         ),
         isFalse,
       );
@@ -91,7 +99,11 @@ void main() {
       );
       expect(
         MoleValueRenderer.canEdit(
-          const MoleDataEntry(key: 'm', value: <String, dynamic>{'a': 1}, sourceType: 'hive'),
+          const MoleDataEntry(
+            key: 'm',
+            value: <String, dynamic>{'a': 1},
+            sourceType: 'hive',
+          ),
         ),
         isTrue,
       );
@@ -100,7 +112,11 @@ void main() {
 
   group('MoleValueRenderer (widget)', () {
     testWidgets('renders a primitive value', (tester) async {
-      const entry = MoleDataEntry(key: 'theme', value: 'dark', sourceType: 'prefs');
+      const entry = MoleDataEntry(
+        key: 'theme',
+        value: 'dark',
+        sourceType: 'prefs',
+      );
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(body: MoleValueRenderer(entry: entry)),
@@ -118,7 +134,9 @@ void main() {
       );
       await tester.pumpWidget(
         const MaterialApp(
-          home: Scaffold(body: MoleValueRenderer(entry: entry, revealed: false)),
+          home: Scaffold(
+            body: MoleValueRenderer(entry: entry, revealed: false),
+          ),
         ),
       );
       expect(find.text('••••••••'), findsOneWidget);

@@ -12,10 +12,12 @@ import 'mole_source.dart';
 /// `flutter_secure_storage` offers no change notifications, so the stream
 /// refreshes when Mole itself mutates the store, and on registration.
 class MoleSecureStorageSource implements MoleSource {
+  /// Wraps an existing [FlutterSecureStorage] instance for Mole inspection.
   MoleSecureStorageSource(this.storage);
 
   final FlutterSecureStorage storage;
-  late final StreamController<List<MoleDataEntry>> _stream = StreamController<List<MoleDataEntry>>.broadcast(onListen: _emit);
+  late final StreamController<List<MoleDataEntry>> _stream =
+      StreamController<List<MoleDataEntry>>.broadcast(onListen: _emit);
 
   @override
   String get name => 'Secure Storage';

@@ -8,7 +8,11 @@ import 'fakes.dart';
 void main() {
   group('MoleDataEntry', () {
     test('matches by key and value', () {
-      const entry = MoleDataEntry(key: 'theme', value: 'dark', sourceType: 'prefs');
+      const entry = MoleDataEntry(
+        key: 'theme',
+        value: 'dark',
+        sourceType: 'prefs',
+      );
       expect(entry.matches('theme'), isTrue);
       expect(entry.matches('DARK'), isTrue);
       expect(entry.matches('nope'), isFalse);
@@ -28,12 +32,7 @@ void main() {
 
   group('MoleStore', () {
     test('registers sources and caches snapshots', () async {
-      final fake = FakeMoleSource(
-        store: {
-          'a': 1,
-          'b': 2,
-        },
-      );
+      final fake = FakeMoleSource(store: {'a': 1, 'b': 2});
       final store = MoleStore();
       store.addSource(fake);
 
@@ -104,14 +103,17 @@ void main() {
       expect(on.showReleaseWarning, isTrue);
     });
 
-    test('enabled false turns off release even when enableInRelease is true', () {
-      final off = MoleActivation.resolve(
-        const MoleConfig(enabled: false, enableInRelease: true),
-        isReleaseMode: true,
-      );
-      expect(off.active, isFalse);
-      expect(off.showReleaseWarning, isFalse);
-    });
+    test(
+      'enabled false turns off release even when enableInRelease is true',
+      () {
+        final off = MoleActivation.resolve(
+          const MoleConfig(enabled: false, enableInRelease: true),
+          isReleaseMode: true,
+        );
+        expect(off.active, isFalse);
+        expect(off.showReleaseWarning, isFalse);
+      },
+    );
 
     test('release warning only when active in release', () {
       final on = MoleActivation.resolve(
@@ -154,14 +156,10 @@ void main() {
     });
 
     test('parses JSON maps and lists', () {
-      expect(
-        coerceEditedValue('{"name":"mole"}', {'name': 'old'}),
-        {'name': 'mole'},
-      );
-      expect(
-        coerceEditedValue('[1,2]', [0]),
-        [1, 2],
-      );
+      expect(coerceEditedValue('{"name":"mole"}', {'name': 'old'}), {
+        'name': 'mole',
+      });
+      expect(coerceEditedValue('[1,2]', [0]), [1, 2]);
     });
   });
 
@@ -193,13 +191,10 @@ void main() {
     expect(prefs, isNot(store.sources));
   });
 
-  testWidgets('dashboard renders registered sources with counts', (tester) async {
-    final fake = FakeMoleSource(
-      store: {
-        'k1': 'v1',
-        'k2': 'v2',
-      },
-    );
+  testWidgets('dashboard renders registered sources with counts', (
+    tester,
+  ) async {
+    final fake = FakeMoleSource(store: {'k1': 'v1', 'k2': 'v2'});
     final store = MoleStore();
     store.addSource(fake);
     await tester.pump(const Duration(milliseconds: 300));

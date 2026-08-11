@@ -11,5 +11,5 @@
 /// pulls `dart:io` into a web build.
 library;
 
-export 'cache_io.dart' if (dart.library.html) 'cache_web.dart';
+export 'cache_web.dart' if (dart.library.io) 'cache_io.dart';
 export 'mole_file_entry.dart';

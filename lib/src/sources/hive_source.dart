@@ -10,10 +10,12 @@ import 'mole_source.dart';
 /// Values are shown exactly as stored - no masking. The stream is derived
 /// from the box's change events, so external writes push live updates too.
 class MoleHiveSource implements MoleSource {
+  /// Wraps an existing Hive [Box] for Mole inspection.
   MoleHiveSource(this.box);
 
   final Box<dynamic> box;
-  late final StreamController<List<MoleDataEntry>> _stream = StreamController<List<MoleDataEntry>>.broadcast(onListen: _emit);
+  late final StreamController<List<MoleDataEntry>> _stream =
+      StreamController<List<MoleDataEntry>>.broadcast(onListen: _emit);
   StreamSubscription<dynamic>? _boxSub;
 
   @override

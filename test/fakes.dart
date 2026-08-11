@@ -8,9 +8,7 @@ class FakeMoleSource implements MoleSource {
     Map<String, dynamic>? store,
     this.name = 'Fake Source',
     this.type = 'prefs',
-  }) : _values = {
-    ...?store,
-  };
+  }) : _values = {...?store};
 
   final Map<String, dynamic> _values;
   late final StreamController<List<MoleDataEntry>> _controller =
@@ -38,9 +36,7 @@ class FakeMoleSource implements MoleSource {
   void push(List<MoleDataEntry> entries) {
     _values
       ..clear()
-      ..addEntries(
-        entries.map((e) => MapEntry(e.key, e.value)),
-      );
+      ..addEntries(entries.map((e) => MapEntry(e.key, e.value)));
     _emit();
   }
 
@@ -78,11 +74,7 @@ class FakeMoleSource implements MoleSource {
   void _emit() {
     _cache = [
       for (final e in _values.entries)
-        MoleDataEntry(
-          key: e.key,
-          value: e.value,
-          sourceType: type,
-        ),
+        MoleDataEntry(key: e.key, value: e.value, sourceType: type),
     ];
     if (!_controller.isClosed) {
       _controller.add(_cache);

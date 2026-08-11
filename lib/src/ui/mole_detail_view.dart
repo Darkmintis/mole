@@ -129,9 +129,9 @@ class _MoleDetailViewState extends State<MoleDetailView> {
         : '${entry.key} = ${entry.value}';
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Copied to clipboard')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Copied to clipboard')));
   }
 
   @override
@@ -196,19 +196,13 @@ class _MoleDetailViewState extends State<MoleDetailView> {
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
             SizedBox(height: entry.isSensitive ? 6 : 8),
-            MoleValueRenderer(
-              entry: entry,
-              revealed: _revealed,
-            ),
+            MoleValueRenderer(entry: entry, revealed: _revealed),
             if (entry.isSensitive && !MoleValueRenderer.canEdit(entry))
               const SizedBox(height: 8),
             if (entry.isSensitive)
               Text(
                 'Sensitive value - masked by default. Use the eye icon to reveal.',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: scheme.onSurfaceVariant,
-                ),
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
               ),
             const SizedBox(height: 24),
             Row(

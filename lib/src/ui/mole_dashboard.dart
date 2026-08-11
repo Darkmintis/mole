@@ -54,10 +54,7 @@ class _MoleDashboardState extends State<MoleDashboard> {
         transitionDuration: const Duration(milliseconds: 120),
         reverseTransitionDuration: const Duration(milliseconds: 100),
         pageBuilder: (context, animation, secondaryAnimation) {
-          return MoleSourceView(
-            store: widget.store,
-            source: source,
-          );
+          return MoleSourceView(store: widget.store, source: source);
         },
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
@@ -286,9 +283,9 @@ class _EmptyState extends StatelessWidget {
               'Register storage instances in Mole.install(sources: …) '
               'to inspect them here.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),

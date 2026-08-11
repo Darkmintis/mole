@@ -32,6 +32,8 @@ class Mole {
   static OverlayEntry? _overlayEntry;
   static bool _installed = false;
   static final ValueNotifier<bool> _inspectorOpen = ValueNotifier<bool>(false);
+
+  /// Attach to [MaterialApp.navigatorKey] so the bubble can open the inspector.
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -158,9 +160,11 @@ class Mole {
             return MoleDashboard(
               store: _store!,
               config: _config,
-              onClearAll: (_store != null && _store!.isEmpty) ? null : () {
-                debugPrint('Mole cleared all sources');
-              },
+              onClearAll: (_store != null && _store!.isEmpty)
+                  ? null
+                  : () {
+                      debugPrint('Mole cleared all sources');
+                    },
             );
           },
           transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -13,10 +13,12 @@ import 'mole_source.dart';
 /// refreshes when Mole itself mutates the store, and the store re-snapshots on
 /// source registration. Rapid writes are debounced by the store, not here.
 class MoleSharedPrefsSource implements MoleSource {
+  /// Wraps an existing [SharedPreferences] instance for Mole inspection.
   MoleSharedPrefsSource(this.prefs);
 
   final SharedPreferences prefs;
-  late final StreamController<List<MoleDataEntry>> _stream = StreamController<List<MoleDataEntry>>.broadcast(onListen: _emit);
+  late final StreamController<List<MoleDataEntry>> _stream =
+      StreamController<List<MoleDataEntry>>.broadcast(onListen: _emit);
 
   @override
   String get name => 'SharedPreferences';
@@ -35,11 +37,7 @@ class MoleSharedPrefsSource implements MoleSource {
   List<MoleDataEntry> _snapshot() {
     return [
       for (final key in prefs.getKeys())
-        MoleDataEntry(
-          key: key,
-          value: prefs.get(key),
-          sourceType: type,
-        ),
+        MoleDataEntry(key: key, value: prefs.get(key), sourceType: type),
     ];
   }
 

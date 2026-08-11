@@ -11,11 +11,7 @@ import 'mole_value_renderer.dart';
 /// Search by key, tap an entry to view/edit/delete, clear the whole source
 /// with a confirmation dialog.
 class MoleSourceView extends StatefulWidget {
-  const MoleSourceView({
-    super.key,
-    required this.store,
-    required this.source,
-  });
+  const MoleSourceView({super.key, required this.store, required this.source});
 
   final MoleStore store;
   final MoleSource source;
@@ -196,7 +192,7 @@ class _MoleSourceViewState extends State<MoleSourceView> {
                                   : scheme.onPrimaryContainer,
                             ),
                           ),
-                           title: Text(
+                          title: Text(
                             entry.key,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -251,9 +247,9 @@ class _EmptyState extends StatelessWidget {
                   ? 'No keys match your search.'
                   : 'This source has no stored values.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),

@@ -75,8 +75,8 @@ class MoleValueRenderer extends StatelessWidget {
   }
 
   static TextStyle get _style => const TextStyle(
-        fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
-      );
+    fontFeatures: <FontFeature>[FontFeature.tabularFigures()],
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -135,11 +135,21 @@ class _Compact extends StatelessWidget {
         text = value.toString();
       }
       if (text.length > 80) text = '${text.substring(0, 80)}…';
-      return Text(text, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
+      return Text(
+        text,
+        style: style,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
     }
 
     final preview = entry.preview;
-    return Text(preview, style: style, maxLines: 1, overflow: TextOverflow.ellipsis);
+    return Text(
+      preview,
+      style: style,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
   }
 
   String _modified(MoleFileEntry f) {
@@ -220,7 +230,9 @@ class _JsonDetailState extends State<_JsonDetail> {
           TextButton.icon(
             onPressed: () => setState(() => _expanded = !_expanded),
             icon: Icon(
-              _expanded ? Icons.expand_more_rounded : Icons.chevron_right_rounded,
+              _expanded
+                  ? Icons.expand_more_rounded
+                  : Icons.chevron_right_rounded,
               size: 16,
             ),
             label: Text(_expanded ? 'Show less' : 'Show full'),
@@ -252,7 +264,8 @@ class _BytesDetail extends StatelessWidget {
 
   Widget _hexPreview(Uint8List bytes) {
     final preview = bytes.take(32);
-    final buffer = StringBuffer()..write('Binary data - ${bytes.lengthInBytes} bytes\n');
+    final buffer = StringBuffer()
+      ..write('Binary data - ${bytes.lengthInBytes} bytes\n');
     var i = 0;
     for (final b in preview) {
       if (i % 8 == 0 && i != 0) {
@@ -343,11 +356,20 @@ class _FileDetail extends StatelessWidget {
             children: [
               Icon(icon, size: 14, color: scheme.onSurfaceVariant),
               const SizedBox(width: 4),
-              Text(label, style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12)),
+              Text(
+                label,
+                style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
+              ),
             ],
           ),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(color: scheme.onSurface, fontWeight: FontWeight.w600)),
+          Text(
+            value,
+            style: TextStyle(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
