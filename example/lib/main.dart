@@ -4,6 +4,7 @@ import 'package:mole/mole.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
+import 'mole_config.dart';
 import 'services/storage_service.dart';
 
 Future<void> main() async {
@@ -13,7 +14,7 @@ Future<void> main() async {
   final box = await StorageService.openBox();
 
   Mole.install(
-    config: const MoleConfig(),
+    config: moleConfig,
     sources: [
       MoleSharedPrefsSource(prefs),
       MoleHiveSource(box),
