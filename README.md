@@ -20,7 +20,7 @@ Most Flutter storage debuggers make you wire up fake mirrors or read raw files. 
 | Values | Read-only export | **Inline edit + delete** per key |
 | Clear | Manual | **Clear one key, one source, or everything** |
 | Release | Usually unavailable or unsafe | **Off by default** (true no-op) |
-| Release warning | Often missing | **Always on** — console banner + permanent red tag |
+| Release warning | Often missing | **Only when release is on** — banner + red tag |
 
 ## Install
 
@@ -42,13 +42,19 @@ import 'package:mole/mole.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Edit this file to control Mole — copy it into your own project.
+const moleConfig = MoleConfig(
+  enabled: true,
+  enableInRelease: false,
+);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
 
   Mole.install(
-    config: const MoleConfig(),
+    config: moleConfig,
     sources: [
       MoleSharedPrefsSource(prefs),
       // MoleHiveSource(box: myBox),
@@ -77,13 +83,31 @@ Tap the floating bubble to open the dashboard. Sources are listed with live entr
 
 ## Configuration
 
+Create a `mole_config.dart` in your project (copy from the example) and edit it once:
+
+```dart
+// lib/mole_config.dart
+import 'package:mole/mole.dart';
+
+const moleConfig = MoleConfig(
+  enabled: true,            // set false to hide the bubble entirely
+  enableInRelease: false,   // set true only when you need release inspection
+  refreshDebounce: Duration(milliseconds: 200),
+);
+```
+
+```dart
+Mole.install(config: moleConfig, sources: [...]);
+```
+
+Or pass config inline:
+
 ```dart
 Mole.install(
   config: const MoleConfig(
-    enabled: true,            // master switch (debug/profile)
-    enableInRelease: false,   // set true only when you intentionally need release
-    startMinimized: true,
-    refreshDebounce: Duration(milliseconds: 200), // batch rapid writes
+    enabled: true,
+    enableInRelease: false,
+    refreshDebounce: Duration(milliseconds: 200),
   ),
   sources: [...],
 );
@@ -93,13 +117,14 @@ Mole.install(
 
 | Mode | Behavior |
 |---|---|
-| Debug / Profile | On when `enabled: true` (default) |
-| Release | **Fully off** unless `enableInRelease: true` |
-| Release + `enableInRelease: true` | On, with a loud console warning **and** a permanent red **MOLE ACTIVE** tag |
+| Debug / Profile | On when `enabled: true` (default). Floating bubble always visible. |
+| Release | Off unless `enabled: true` **and** `enableInRelease: true` |
+| Release + both on | Inspector runs with a loud console warning **and** a permanent red **MOLE ACTIVE** tag |
+| Release off | No inspector, **no warning** |
 
-The release warning is **not configurable**. If Mole is running in a release build, the banner and red tag always appear so storage visibility can never ship silently.
+Set `enabled: false` to turn Mole off completely — no bubble, no listeners, zero overhead.
 
-When disabled, Mole attaches nothing and inspects nothing.
+When Mole is active in release, the warning is automatic and cannot be disabled separately.
 
 ## Source adapters
 
@@ -117,7 +142,7 @@ Secure Storage values are masked in-app because they are real secrets (tokens, c
 
 - One-line `Mole.install(config:, sources:)`
 - Built-in adapters for SharedPreferences, Hive, Secure Storage
-- Floating draggable/minimizable bubble with total entry count
+- Floating draggable bubble (always visible when enabled)
 - Dashboard: grouped sources with live entry counts
 - Live key/value tables per source
 - Per-entry **edit** and **delete**
