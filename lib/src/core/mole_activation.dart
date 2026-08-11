@@ -11,28 +11,31 @@ class MoleActivation {
     required this.showReleaseWarning,
   });
 
-  /// Whether sources, store, and overlay should run.
+  /// Whether sources, store, and the floating bubble should run.
   final bool active;
 
   /// Whether to print the release banner and show the red on-screen tag.
   ///
-  /// Always `true` when Mole is active in a release build. Not configurable.
+  /// `true` only when Mole is active in a release build.
   final bool showReleaseWarning;
 
   /// Compute activation from [config] and build mode.
   factory MoleActivation.resolve(MoleConfig config, {bool? isReleaseMode}) {
+    if (!config.enabled) {
+      return const MoleActivation(active: false, showReleaseWarning: false);
+    }
+
     final release = isReleaseMode ?? kReleaseMode;
 
     if (release) {
       if (!config.enableInRelease) {
         return const MoleActivation(active: false, showReleaseWarning: false);
       }
-      // Release + explicit opt-in: warning is permanent and cannot be disabled.
       return const MoleActivation(active: true, showReleaseWarning: true);
     }
 
-    // debug / profile
-    return MoleActivation(active: config.enabled, showReleaseWarning: false);
+    // debug / profile — on when enabled, no release warning
+    return const MoleActivation(active: true, showReleaseWarning: false);
   }
 }
 
