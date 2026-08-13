@@ -40,7 +40,7 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# FVM - keep .fvmrc and fvm_config.json; ignore local SDK link
+# FVM - keep .fvmrc + .fvm/fvm_config.json tracked; ignore local SDK link
 .fvm/flutter_sdk
 .fvm/versions
 .fvm/release
