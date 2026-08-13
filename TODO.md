@@ -1,6 +1,6 @@
 # Roadmap
 
-## v0.1.3
+## v0.1.4
 
 - [ ] `Mole.install(navigatorKey: …)` for Stacked / GetX
 - [ ] Stacked setup snippet in README

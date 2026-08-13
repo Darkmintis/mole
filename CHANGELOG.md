@@ -1,3 +1,8 @@
+## 0.1.3
+
+* Fix pub.dev analysis: remove broken `.pubignore` that overrode `.gitignore`
+  and published local `build/` artifacts.
+
 ## 0.1.2
 
 * Loosen `flutter_secure_storage` to `>=9.2.4 <12.0.0` — no longer forces
