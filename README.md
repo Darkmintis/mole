@@ -9,7 +9,7 @@ Local storage inspector for Flutter. Pass the storage instances your app already
 
 ```yaml
 dependencies:
-  mole: ^0.1.1
+  mole: ^0.1.2
 ```
 
 ```bash
@@ -51,7 +51,7 @@ Future<void> main() async {
       MoleSharedPrefsSource(prefs),
       // Add only what your app uses:
       // MoleHiveSource(box),
-      // MoleSecureStorageSource(secureStorage),
+      // MoleSecureStorageSource(storage)  — import package:mole/secure_storage.dart
       // MoleCacheSource(),
     ],
     onStorageChanged: () {
@@ -95,10 +95,10 @@ Register only the storage your app already created. Only registered sources appe
 |---|---|
 | `MoleSharedPrefsSource(prefs)` | SharedPreferences |
 | `MoleHiveSource(box)` | Hive box |
-| `MoleSecureStorageSource(storage)` | flutter_secure_storage (masked until reveal) |
+| `MoleSecureStorageSource(storage)` | flutter_secure_storage — `import 'package:mole/secure_storage.dart'` |
 | `MoleCacheSource()` | App temp/cache files |
 
-Edits in Mole write to the same instances you pass in. Use `onStorageChanged` if your UI should refresh after an edit.
+Pass the same instances your app already uses (supports FSS 9–11). Edits write through immediately — use `onStorageChanged` to refresh your UI.
 
 ## What you get
 
@@ -120,6 +120,10 @@ flutter run
 
 - Flutter `>=3.44.0`
 - Dart `^3.12.1`
+
+## Roadmap
+
+See [TODO.md](TODO.md) for the public backlog and release plan.
 
 ## License
 

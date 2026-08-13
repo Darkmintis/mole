@@ -1,3 +1,12 @@
+## 0.1.2
+
+* Loosen `flutter_secure_storage` to `>=9.2.4 <12.0.0` — no longer forces
+  FSS 11 or Android SDK 37 on existing apps.
+* Add optional `package:mole/secure_storage.dart` import for secure storage
+  adapters (`MoleSecureStorageSource` is no longer exported from
+  `package:mole/mole.dart`).
+* Document secure storage import in README.
+
 ## 0.1.1
 
 * Upgrade `flutter_secure_storage` to ^11.0.0
