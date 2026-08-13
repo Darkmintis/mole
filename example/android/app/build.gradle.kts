@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.darkmintis.mole_example"
-    compileSdk = 37
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -20,7 +20,7 @@ android {
     defaultConfig {
         applicationId = "com.darkmintis.mole_example"
         minSdk = flutter.minSdkVersion
-        targetSdk = 37
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

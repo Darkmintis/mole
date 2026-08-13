@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mole/mole.dart';
+import 'package:mole/secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
