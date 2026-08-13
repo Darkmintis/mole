@@ -14,7 +14,6 @@ export 'src/sources/cache_source.dart';
 export 'src/sources/hive_source.dart';
 export 'src/sources/mole_file_entry.dart';
 export 'src/sources/mole_source.dart';
-export 'src/sources/secure_storage_source.dart';
 export 'src/sources/shared_prefs_source.dart';
 export 'src/ui/mole_bubble.dart';
 export 'src/ui/mole_dashboard.dart';
