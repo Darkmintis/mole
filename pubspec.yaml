@@ -3,6 +3,7 @@ description: >-
   Local storage inspector for Flutter - see, edit, and clear everything your
   app has stored in SharedPreferences, Hive, Secure Storage, and caches.
 version: 0.1.3
+license: MIT
 homepage: https://github.com/darkmintis/mole
 repository: https://github.com/darkmintis/mole
 issue_tracker: https://github.com/darkmintis/mole/issues

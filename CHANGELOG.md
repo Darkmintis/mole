@@ -1,27 +1,39 @@
-## 0.1.3
+# Changelog
 
-* Fix pub.dev analysis: remove broken `.pubignore` that overrode `.gitignore`
+All notable changes to this project will be documented in this file.
+
+## [0.1.3]
+
+### Fixed
+
+- pub.dev analysis: remove broken `.pubignore` that overrode `.gitignore`
   and published local `build/` artifacts.
 
-## 0.1.2
+## [0.1.2]
 
-* Loosen `flutter_secure_storage` to `>=9.2.4 <12.0.0` — no longer forces
+### Changed
+
+- Loosen `flutter_secure_storage` to `>=9.2.4 <12.0.0` — no longer forces
   FSS 11 or Android SDK 37 on existing apps.
-* Add optional `package:mole/secure_storage.dart` import for secure storage
+- Add optional `package:mole/secure_storage.dart` import for secure storage
   adapters (`MoleSecureStorageSource` is no longer exported from
   `package:mole/mole.dart`).
-* Document secure storage import in README.
+- Document secure storage import in README.
 
-## 0.1.1
+## [0.1.1]
 
-* Upgrade `flutter_secure_storage` to ^11.0.0
+### Changed
 
-## 0.1.0
+- Upgrade `flutter_secure_storage` to ^11.0.0
 
-* Initial release: local storage inspector for Flutter.
-* Built-in source adapters for SharedPreferences, Hive, and Secure Storage.
-* Floating bubble + Material 3 dashboard grouped by source with live counts.
-* Per-entry edit/delete, clear per source with confirmation, search by key.
-* Secure Storage values masked by default (tap to reveal).
-* Production-safe install gating: off by default in release with an
+## [0.1.0]
+
+### Added
+
+- Initial release: local storage inspector for Flutter.
+- Built-in source adapters for SharedPreferences, Hive, and Secure Storage.
+- Floating bubble + Material 3 dashboard grouped by source with live counts.
+- Per-entry edit/delete, clear per source with confirmation, search by key.
+- Secure Storage values masked by default (tap to reveal).
+- Production-safe install gating: off by default in release with an
   unmissable warning when explicitly enabled.
