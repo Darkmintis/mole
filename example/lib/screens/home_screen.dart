@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _SectionCard(
             title: 'SharedPreferences',
             icon: Icons.tune_rounded,
-            color: const Color(0xFF1B6B4A),
+            color: const Color(0xFF0F6B7A),
             child: Column(
               children: [
                 _label(context, 'Name'),
