@@ -233,6 +233,8 @@ class Mole {
   static void _tearDown() {
     hideOverlay();
     _inspectorOpen.value = false;
+    MoleBubble.clearPersistedPositionForTest();
+    MoleBubble.clearUserHiddenForTest();
     _engine?.detachAll();
     _engine = null;
     _store?.dispose();

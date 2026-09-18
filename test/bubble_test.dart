@@ -263,6 +263,81 @@ void main() {
       expect(after.dx, closeTo(8 + 24, 1)); // edgeMargin + half size
     });
 
+    testWidgets('remembers position after bubble is remounted', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      addTearDown(MoleBubble.clearPersistedPositionForTest);
+
+      final fake = FakeMoleSource();
+      final store = MoleStore();
+      store.addSource(fake);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      Widget bubble() => MaterialApp(
+            home: Stack(
+              children: [
+                MoleBubble(
+                  store: store,
+                  config: const MoleConfig(),
+                  showReleaseTag: false,
+                  onOpen: () {},
+                ),
+              ],
+            ),
+          );
+
+      await tester.pumpWidget(bubble());
+      final button = find.byIcon(Icons.storage_rounded);
+      await tester.drag(button, const Offset(-200, -80));
+      await tester.pumpAndSettle();
+      final saved = tester.getCenter(button);
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(bubble());
+      await tester.pumpAndSettle();
+
+      final restored = tester.getCenter(find.byIcon(Icons.storage_rounded));
+      expect(restored.dx, closeTo(saved.dx, 1));
+      expect(restored.dy, closeTo(saved.dy, 1));
+    });
+
+    testWidgets('long-press hides the bubble until reassemble', (tester) async {
+      addTearDown(MoleBubble.clearUserHiddenForTest);
+      addTearDown(MoleBubble.clearPersistedPositionForTest);
+
+      final fake = FakeMoleSource();
+      final store = MoleStore();
+      store.addSource(fake);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Stack(
+            children: [
+              MoleBubble(
+                store: store,
+                config: const MoleConfig(),
+                showReleaseTag: false,
+                onOpen: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(find.byIcon(Icons.storage_rounded), findsOneWidget);
+
+      final button = find.byIcon(Icons.storage_rounded);
+      final gesture = await tester.startGesture(tester.getCenter(button));
+      await tester.pump(const Duration(milliseconds: 500));
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.storage_rounded), findsNothing);
+
+      tester.binding.reassembleApplication();
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.storage_rounded), findsOneWidget);
+    });
   });
 }
 
