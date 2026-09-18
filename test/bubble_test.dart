@@ -4,8 +4,8 @@ import 'package:mole/mole.dart';
 
 import 'fakes.dart';
 
-/// Mirrors [MoleBubble]'s default corner clearance (above the exact corner).
-const _bubbleCornerMargin = 80.0;
+/// Mirrors [MoleBubble]'s default lower-middle band (0.35 from center→bottom).
+const _bubbleLowerBand = 0.35;
 
 void main() {
   group('MoleConfig.cacheSizeWarningThresholdMB', () {
@@ -144,7 +144,7 @@ void main() {
       expect(find.text('3'), findsNothing);
     });
 
-    testWidgets('defaults to the bottom-right, a bit above the corner', (
+    testWidgets('defaults to lower-middle on the right edge', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(400, 800);
@@ -153,36 +153,14 @@ void main() {
 
       await pumpWithBubble(tester, const MoleConfig());
 
+      const size = 48.0;
+      final center = (800 - size) / 2;
+      final bottom = 800 - size - 24;
+      final expectedTop = center + (bottom - center) * _bubbleLowerBand;
+
       final bubble = tester.getRect(find.byType(MoleBubble));
-      // Bubble is 52x52 and its Positioned should sit ~16px off the right edge
-      // and ~80px above the bottom (clear of a typical FAB).
       expect(bubble.right, closeTo(400 - 16, 0.1));
-      expect(bubble.bottom, closeTo(800 - _bubbleCornerMargin, 0.1));
-    });
-
-    testWidgets('pulses (fires animation) when a source changes', (
-      tester,
-    ) async {
-      final (store, fake) = await pumpWithBubble(tester, const MoleConfig());
-
-      // Writes a new source change; the pulse controller animates opacity.
-      fake.set('k', 'v');
-      await tester.pump(const Duration(milliseconds: 100));
-
-      final iconFinder = find.byIcon(Icons.storage_rounded);
-      // During the pulse the opacity is < 1 somewhere in the 500ms window.
-      final ancestorOpacity = tester
-          .widget<FadeTransition>(
-            find
-                .ancestor(of: iconFinder, matching: find.byType(FadeTransition))
-                .first,
-          )
-          .opacity
-          .value;
-      expect(ancestorOpacity, lessThan(1.0));
-
-      // Drain the store's debounce timer so nothing is pending at teardown.
-      await tester.pump(const Duration(milliseconds: 400));
+      expect(bubble.top, closeTo(expectedTop, 0.1));
     });
 
     testWidgets('does not show the warning dot under the threshold', (
@@ -237,6 +215,54 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets('tiny pan opens inspector (tap via slop)', (tester) async {
+      var opened = false;
+      final fake = FakeMoleSource();
+      final store = MoleStore();
+      store.addSource(fake);
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Stack(
+            children: [
+              MoleBubble(
+                store: store,
+                config: const MoleConfig(),
+                showReleaseTag: false,
+                onOpen: () => opened = true,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      await tester.timedDrag(
+        find.byIcon(Icons.storage_rounded),
+        const Offset(2, 0),
+        const Duration(milliseconds: 50),
+      );
+      expect(opened, isTrue);
+    });
+
+    testWidgets('drag snaps to nearer horizontal edge', (tester) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await pumpWithBubble(tester, const MoleConfig());
+
+      final button = find.byIcon(Icons.storage_rounded);
+      final before = tester.getCenter(button);
+      await tester.drag(button, const Offset(-200, -80));
+      await tester.pumpAndSettle();
+
+      final after = tester.getCenter(button);
+      expect(after.dx, lessThan(before.dx - 50));
+      expect(after.dx, closeTo(8 + 24, 1)); // edgeMargin + half size
+    });
+
   });
 }
 

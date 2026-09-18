@@ -9,14 +9,12 @@ import 'mole_theme.dart';
 /// Follows the §3b spec - **no persistent count**. Storage writes are
 /// occasional, not a stream, so a number would be meaningless noise:
 ///
-/// - **Default state**: a database/cylinder icon.
-/// - **Pulse-on-write**: brief ~500ms opacity/scale glow whenever any
-///   registered source changes. No number - just a visual pulse.
+/// - **Default state**: a database/cylinder icon (always solid).
 /// - **Warning badge**: a small red dot appears **only if** total cache size
 ///   crosses [MoleConfig.cacheSizeWarningThresholdMB].
 ///
-/// The pulse runs on the [AnimationController] it owns locally; it never
-/// rebuilds the dashboard or source views, keeping §6 near-zero overhead.
+/// Drag uses pan-only gestures (no competing tap) and snaps to the nearer
+/// horizontal edge on release — same model as Sway's floating button.
 class MoleBubble extends StatefulWidget {
   /// Creates the floating Mole bubble overlay.
   const MoleBubble({
@@ -27,7 +25,7 @@ class MoleBubble extends StatefulWidget {
     required this.onOpen,
   });
 
-  /// Live store used for pulse-on-write and cache-size warning dot.
+  /// Live store used for the cache-size warning dot.
   final MoleStore store;
 
   /// Bubble behavior thresholds (cache warning, etc.).
@@ -41,36 +39,18 @@ class MoleBubble extends StatefulWidget {
   State<MoleBubble> createState() => _MoleBubbleState();
 }
 
-class _MoleBubbleState extends State<MoleBubble>
-    with SingleTickerProviderStateMixin {
-  static const _size = 52.0;
-  static const _radius = 14.0;
-  static const _pulseDuration = Duration(milliseconds: 500);
+class _MoleBubbleState extends State<MoleBubble> {
+  static const _size = 48.0;
+  static const _radius = 12.0;
+  static const _edgeMargin = 8.0;
+  static const _dragTapSlop = 8.0;
 
-  /// How far above the *exact* bottom-right corner the bubble sits by default
-  /// - clear of a typical floating action button (~56px + 16px gap).
-  static const _cornerMargin = 80.0;
+  /// How far from vertical-center toward the bottom safe edge (0 = center,
+  /// 1 = bottom). Lands in the lower-middle band.
+  static const _defaultLowerBand = 0.35;
 
-  /// Current offset (top-left). `null` until the user drags - while null the
-  /// bubble sits a little above the bottom-right corner (§3b default).
   Offset? _offset;
-
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: _pulseDuration,
-  );
-  late final Animation<double> _opacity = Tween<double>(
-    begin: 0.35,
-    end: 1.0,
-  ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeOut));
-  late final Animation<double> _scale = Tween<double>(
-    begin: 0.9,
-    end: 1.0,
-  ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeOutCubic));
-
-  /// Writes are occasional, so a pulse only replays on real changes (not on
-  /// the first listener registration, which fires the initial snapshot).
-  bool _pulsedOnce = false;
+  double _dragDistance = 0;
 
   @override
   void initState() {
@@ -81,18 +61,11 @@ class _MoleBubbleState extends State<MoleBubble>
   @override
   void dispose() {
     widget.store.removeListener(_onStoreChanged);
-    _pulse.dispose();
     super.dispose();
   }
 
   void _onStoreChanged() {
-    if (!mounted) return;
-    // Skip the initial snapshot so the bubble doesn't glow on first build.
-    if (!_pulsedOnce) {
-      _pulsedOnce = true;
-      return;
-    }
-    _pulse.forward(from: 0);
+    if (mounted) setState(() {});
   }
 
   bool get _cacheOverThreshold {
@@ -101,8 +74,54 @@ class _MoleBubbleState extends State<MoleBubble>
     return widget.store.totalCacheBytes >= thresholdBytes;
   }
 
-  /// Small red dot pinned to the top-right corner - shown only when total
-  /// cache size crosses the §3b threshold. Added to the bubble's inner stack.
+  Offset _defaultOffset(Size size) {
+    final center = (size.height - _size) / 2;
+    final bottom = size.height - _size - 24;
+    return Offset(
+      size.width - _size - 16,
+      center + (bottom - center) * _defaultLowerBand,
+    );
+  }
+
+  Offset _clamp(Offset offset, MediaQueryData media) => Offset(
+        offset.dx.clamp(_edgeMargin, media.size.width - _size - _edgeMargin),
+        offset.dy.clamp(
+          media.padding.top + _edgeMargin,
+          media.size.height - _size - 24,
+        ),
+      );
+
+  Offset _snapToEdge(Offset offset, MediaQueryData media) {
+    final midX = media.size.width / 2;
+    final snapLeft = offset.dx + _size / 2 < midX;
+    final x = snapLeft
+        ? _edgeMargin
+        : media.size.width - _size - _edgeMargin;
+    return _clamp(Offset(x, offset.dy), media);
+  }
+
+  void _onPanStart(DragStartDetails details) {
+    _dragDistance = 0;
+  }
+
+  void _onPanUpdate(DragUpdateDetails details) {
+    final media = MediaQuery.of(context);
+    final current = _offset ?? _defaultOffset(media.size);
+    _dragDistance += details.delta.distance;
+    setState(() => _offset = current + details.delta);
+  }
+
+  void _onPanEnd(DragEndDetails details) {
+    if (!mounted) return;
+    if (_dragDistance < _dragTapSlop) {
+      widget.onOpen();
+      return;
+    }
+    final media = MediaQuery.of(context);
+    final current = _offset ?? _defaultOffset(media.size);
+    setState(() => _offset = _snapToEdge(current, media));
+  }
+
   Widget _warningDot(ColorScheme scheme) {
     return Positioned(
       key: const ValueKey('mole-cache-warning-dot'),
@@ -122,22 +141,14 @@ class _MoleBubbleState extends State<MoleBubble>
   @override
   Widget build(BuildContext context) {
     final media = MediaQuery.of(context);
-
-    // Default position: bottom-right but a little above the exact corner, so
-    // it doesn't overlap a floating action button / system gesture bar.
-    final position =
-        _offset ??
-        Offset(
-          media.size.width - _size - 16,
-          media.size.height - _size - _cornerMargin,
-        );
+    final position = _clamp(
+      _offset ?? _defaultOffset(media.size),
+      media,
+    );
 
     return Positioned(
-      left: position.dx.clamp(8.0, media.size.width - _size - 8),
-      top: position.dy.clamp(
-        media.padding.top + 8,
-        media.size.height - _size - 24,
-      ),
+      left: position.dx,
+      top: position.dy,
       child: MoleTheme.wrap(context, (context) {
         final scheme = Theme.of(context).colorScheme;
         final background = scheme.inverseSurface;
@@ -169,43 +180,28 @@ class _MoleBubbleState extends State<MoleBubble>
               ),
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onPanUpdate: (details) {
-                final media = MediaQuery.of(context);
-                final end =
-                    (_offset ??
-                        Offset(
-                          media.size.width - _size - 16,
-                          media.size.height - _size - _cornerMargin,
-                        )) +
-                    details.delta;
-                setState(() => _offset = end);
-              },
-              onTap: widget.onOpen,
-              child: ScaleTransition(
-                scale: _scale,
-                child: FadeTransition(
-                  opacity: _opacity,
-                  child: Material(
-                    color: background,
-                    elevation: 3,
-                    shadowColor: Colors.black38,
-                    borderRadius: BorderRadius.circular(_radius),
-                    clipBehavior: Clip.antiAlias,
-                    child: SizedBox(
-                      width: _size,
-                      height: _size,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.storage_rounded,
-                            size: 28,
-                            color: foreground,
-                          ),
-                          if (_cacheOverThreshold) _warningDot(scheme),
-                        ],
+              onPanStart: _onPanStart,
+              onPanUpdate: _onPanUpdate,
+              onPanEnd: _onPanEnd,
+              child: Material(
+                color: background,
+                elevation: 3,
+                shadowColor: Colors.black38,
+                borderRadius: BorderRadius.circular(_radius),
+                clipBehavior: Clip.antiAlias,
+                child: SizedBox(
+                  width: _size,
+                  height: _size,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        Icons.storage_rounded,
+                        size: 26,
+                        color: foreground,
                       ),
-                    ),
+                      if (_cacheOverThreshold) _warningDot(scheme),
+                    ],
                   ),
                 ),
               ),
