@@ -68,30 +68,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _init() async {
-    final prefsFuture = widget.prefs != null
-        ? Future<SharedPreferences?>.value(widget.prefs)
-        : _resolvePrefs();
-    final boxFuture = widget.box != null
-        ? Future<Box?>.value(widget.box)
-        : _resolveBox();
-    final results = await Future.wait<Object?>([
-      prefsFuture,
-      boxFuture,
-    ]);
+    // Load prefs first so the form can prefill without waiting on Hive /
+    // path_provider (which may be slow or unavailable in widget tests).
+    final prefs = widget.prefs ?? await _resolvePrefs();
     if (!mounted) return;
-
-    final prefs = results[0] as SharedPreferences?;
-    final box = results[1] as Box?;
-
-    setState(() {
-      _prefs = prefs;
-      _box = box;
-    });
-
     if (prefs != null) {
+      setState(() {
+        _prefs = prefs;
+      });
       _loadIntoForm();
       if (mounted) setState(() {});
     }
+
+    final box = widget.box ?? await _resolveBox();
+    if (!mounted) return;
+    setState(() {
+      _box = box;
+    });
   }
 
   Future<SharedPreferences?> _resolvePrefs() async {

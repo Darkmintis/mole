@@ -32,7 +32,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(MoleExampleApp(prefs: prefs));
     await tester.pump();
-    await tester.pump();
+    await tester.pump(); // prefs-first init settles before Hive
 
     final field = tester.widget<TextField>(
       find.byWidgetPredicate((w) => w is TextField),
