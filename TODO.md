@@ -1,9 +1,8 @@
 # Roadmap
 
-## v0.1.4
+## v0.1.5
 
-- [ ] `Mole.install(navigatorKey: …)` for Stacked / GetX
-- [ ] Stacked setup snippet in README
+- [ ] Stacked / GetX setup snippet in README
 - [ ] Debug assert when `MaterialApp` is missing `builder` / `navigatorKey`
 
 ## v0.2.0

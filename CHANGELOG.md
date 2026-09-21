@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4]
+
+### Added
+
+- `MoleConfig.navigatorKey` / `Mole.navigatorKey` so apps using
+  `MaterialApp.router` (or another app-owned navigator) can open the
+  dashboard without an Overlay-only host.
+- Floating bubble: pan-only drag with edge snap, solid 48px overlay,
+  process-local position memory, and long-press hide until hot reload /
+  hot restart.
+
+### Changed
+
+- Teal Mole theme with a bolder dashboard title.
+- README documents GoRouter / shared-navigator setup and bubble behavior.
+
+### Fixed
+
+- Example app loads SharedPreferences before Hive so the demo form
+  prefills reliably.
+
 ## [0.1.3]
 
 ### Fixed
