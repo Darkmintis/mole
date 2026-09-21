@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mole/mole.dart';
@@ -144,9 +146,7 @@ void main() {
       expect(find.text('3'), findsNothing);
     });
 
-    testWidgets('defaults to lower-middle on the right edge', (
-      tester,
-    ) async {
+    testWidgets('defaults to lower-middle on the right edge', (tester) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
@@ -154,9 +154,9 @@ void main() {
       await pumpWithBubble(tester, const MoleConfig());
 
       const size = 48.0;
-      final center = (800 - size) / 2;
-      final bottom = 800 - size - 24;
-      final expectedTop = center + (bottom - center) * _bubbleLowerBand;
+      const center = (800 - size) / 2;
+      const bottom = 800 - size - 24;
+      const expectedTop = center + (bottom - center) * _bubbleLowerBand;
 
       final bubble = tester.getRect(find.byType(MoleBubble));
       expect(bubble.right, closeTo(400 - 16, 0.1));
@@ -275,17 +275,17 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       Widget bubble() => MaterialApp(
-            home: Stack(
-              children: [
-                MoleBubble(
-                  store: store,
-                  config: const MoleConfig(),
-                  showReleaseTag: false,
-                  onOpen: () {},
-                ),
-              ],
+        home: Stack(
+          children: [
+            MoleBubble(
+              store: store,
+              config: const MoleConfig(),
+              showReleaseTag: false,
+              onOpen: () {},
             ),
-          );
+          ],
+        ),
+      );
 
       await tester.pumpWidget(bubble());
       final button = find.byIcon(Icons.storage_rounded);
@@ -334,7 +334,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.storage_rounded), findsNothing);
 
-      tester.binding.reassembleApplication();
+      unawaited(tester.binding.reassembleApplication());
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.storage_rounded), findsOneWidget);
     });

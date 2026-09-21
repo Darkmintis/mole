@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../config/mole_config.dart';
@@ -51,13 +50,11 @@ class MoleBubble extends StatefulWidget {
   final VoidCallback onOpen;
 
   /// Clears remembered bubble position (tests / [Mole.resetForTest]).
-  @visibleForTesting
   static void clearPersistedPositionForTest() {
     _persistedBubblePosition = null;
   }
 
   /// Clears long-press hide (tests / [Mole.resetForTest]).
-  @visibleForTesting
   static void clearUserHiddenForTest() {
     _userHidden = false;
   }
@@ -125,19 +122,17 @@ class _MoleBubbleState extends State<MoleBubble> {
   }
 
   Offset _clamp(Offset offset, MediaQueryData media) => Offset(
-        offset.dx.clamp(_edgeMargin, media.size.width - _size - _edgeMargin),
-        offset.dy.clamp(
-          media.padding.top + _edgeMargin,
-          media.size.height - _size - 24,
-        ),
-      );
+    offset.dx.clamp(_edgeMargin, media.size.width - _size - _edgeMargin),
+    offset.dy.clamp(
+      media.padding.top + _edgeMargin,
+      media.size.height - _size - 24,
+    ),
+  );
 
   Offset _snapToEdge(Offset offset, MediaQueryData media) {
     final midX = media.size.width / 2;
     final snapLeft = offset.dx + _size / 2 < midX;
-    final x = snapLeft
-        ? _edgeMargin
-        : media.size.width - _size - _edgeMargin;
+    final x = snapLeft ? _edgeMargin : media.size.width - _size - _edgeMargin;
     return _clamp(Offset(x, offset.dy), media);
   }
 
@@ -214,10 +209,7 @@ class _MoleBubbleState extends State<MoleBubble> {
     if (_userHidden) return const SizedBox.shrink();
 
     final media = MediaQuery.of(context);
-    final position = _clamp(
-      _offset ?? _defaultOffset(media.size),
-      media,
-    );
+    final position = _clamp(_offset ?? _defaultOffset(media.size), media);
 
     return Positioned(
       left: position.dx,
@@ -268,11 +260,7 @@ class _MoleBubbleState extends State<MoleBubble> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Icon(
-                        Icons.storage_rounded,
-                        size: 26,
-                        color: foreground,
-                      ),
+                      Icon(Icons.storage_rounded, size: 26, color: foreground),
                       if (_cacheOverThreshold) _warningDot(scheme),
                     ],
                   ),

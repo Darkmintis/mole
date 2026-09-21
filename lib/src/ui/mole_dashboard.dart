@@ -138,10 +138,7 @@ class _MoleDashboardState extends State<MoleDashboard> {
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Mole',
-                style: Theme.of(context).appBarTheme.titleTextStyle,
-              ),
+              Text('Mole', style: Theme.of(context).appBarTheme.titleTextStyle),
               Text(
                 sources.isEmpty
                     ? 'No sources registered'
