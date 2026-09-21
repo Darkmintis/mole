@@ -32,10 +32,15 @@ class Mole {
   static OverlayEntry? _overlayEntry;
   static bool _installed = false;
   static final ValueNotifier<bool> _inspectorOpen = ValueNotifier<bool>(false);
-
-  /// Attach to [MaterialApp.navigatorKey] so the bubble can open the inspector.
-  static final GlobalKey<NavigatorState> navigatorKey =
+  static final GlobalKey<NavigatorState> _defaultNavigatorKey =
       GlobalKey<NavigatorState>();
+
+  /// Attach to [MaterialApp.navigatorKey] or [GoRouter.navigatorKey].
+  ///
+  /// When [MoleConfig.navigatorKey] is set at [install], that key is returned
+  /// so Mole uses your app's navigator (typical with GoRouter).
+  static GlobalKey<NavigatorState> get navigatorKey =>
+      _config.navigatorKey ?? _defaultNavigatorKey;
 
   /// Whether the Mole inspector screen is currently open.
   static bool get isInspectorOpen => _inspectorOpen.value;
@@ -125,8 +130,11 @@ class Mole {
 
   /// Opens the dashboard as a full-screen route.
   ///
-  /// Prefer attaching [navigatorKey] to your [MaterialApp] so this works from
-  /// [builder].
+  /// Prefer attaching [navigatorKey] to your [MaterialApp] / GoRouter so this
+  /// works from [builder].
+  ///
+  /// Resolution order: injected [MoleConfig.navigatorKey], then the default
+  /// [navigatorKey], then [Navigator.maybeOf] from [context] when provided.
   static Future<void> openDashboard([BuildContext? context]) async {
     if (!_activation.active || _store == null) return;
     if (_inspectorOpen.value) return;
@@ -140,7 +148,9 @@ class Mole {
     if (nav == null) {
       debugPrint(
         'Mole: no Navigator found. '
-        'Set MaterialApp(navigatorKey: Mole.navigatorKey, builder: Mole.builder).',
+        'Set MaterialApp(navigatorKey: Mole.navigatorKey, builder: Mole.builder), '
+        'or for MaterialApp.router pass the same GlobalKey to GoRouter and '
+        'MoleConfig(navigatorKey: …).',
       );
       return;
     }
@@ -189,7 +199,7 @@ class Mole {
           config: _config,
           showReleaseTag: _activation.showReleaseWarning,
           onOpen: () {
-            unawaited(openDashboard());
+            unawaited(openDashboard(context));
           },
         );
       },
@@ -207,6 +217,13 @@ class Mole {
   ///   builder: Mole.builder,
   ///   home: HomePage(),
   /// )
+  /// ```
+  ///
+  /// With [MaterialApp.router] / GoRouter:
+  ///
+  /// ```dart
+  /// GoRouter(navigatorKey: Mole.navigatorKey, …);
+  /// // or Mole.install(config: MoleConfig(navigatorKey: yourKey), …);
   /// ```
   static Widget builder(BuildContext context, Widget? child) {
     if (!_activation.active || _store == null) {

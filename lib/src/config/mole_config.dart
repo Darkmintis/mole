@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 /// Configuration for [Mole.install].
 ///
 /// Copy this pattern into your app (e.g. `lib/mole_config.dart`) and adjust
@@ -48,11 +50,18 @@ class MoleConfig {
   /// when exceeded, shows a small red warning dot on the floating bubble.
   final int cacheSizeWarningThresholdMB;
 
+  /// Optional navigator key for [MaterialApp.router] / GoRouter.
+  ///
+  /// Pass your app's existing key (the same one given to GoRouter). When null,
+  /// Mole uses its built-in [Mole.navigatorKey].
+  final GlobalKey<NavigatorState>? navigatorKey;
+
   const MoleConfig({
     this.enabled = true,
     this.enableInRelease = false,
     this.refreshDebounce = const Duration(milliseconds: 200),
     this.cacheSizeWarningThresholdMB = 50,
+    this.navigatorKey,
   });
 
   /// Mole fully off - no bubble, no listeners, zero overhead.
@@ -63,6 +72,7 @@ class MoleConfig {
     bool? enableInRelease,
     Duration? refreshDebounce,
     int? cacheSizeWarningThresholdMB,
+    GlobalKey<NavigatorState>? navigatorKey,
   }) {
     return MoleConfig(
       enabled: enabled ?? this.enabled,
@@ -70,6 +80,7 @@ class MoleConfig {
       refreshDebounce: refreshDebounce ?? this.refreshDebounce,
       cacheSizeWarningThresholdMB:
           cacheSizeWarningThresholdMB ?? this.cacheSizeWarningThresholdMB,
+      navigatorKey: navigatorKey ?? this.navigatorKey,
     );
   }
 
@@ -79,7 +90,8 @@ class MoleConfig {
         'enabled: $enabled, '
         'enableInRelease: $enableInRelease, '
         'refreshDebounce: $refreshDebounce, '
-        'cacheSizeWarningThresholdMB: $cacheSizeWarningThresholdMB'
+        'cacheSizeWarningThresholdMB: $cacheSizeWarningThresholdMB, '
+        'navigatorKey: ${navigatorKey != null}'
         ')';
   }
 }

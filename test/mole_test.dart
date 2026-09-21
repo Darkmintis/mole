@@ -213,6 +213,36 @@ void main() {
     expect(find.text('Fake Source'), findsOneWidget);
     expect(find.text('2 entries · 2'), findsOneWidget);
   });
+
+  test('install with shared navigatorKey exposes it via Mole.navigatorKey', () {
+    final shared = GlobalKey<NavigatorState>();
+    Mole.install(config: MoleConfig(navigatorKey: shared));
+    expect(identical(Mole.navigatorKey, shared), isTrue);
+    Mole.resetForTest();
+  });
+
+  testWidgets('openDashboard uses injected navigatorKey', (tester) async {
+    final shared = GlobalKey<NavigatorState>();
+    Mole.install(config: MoleConfig(navigatorKey: shared));
+    addTearDown(Mole.resetForTest);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: shared,
+        home: const Scaffold(body: Text('home')),
+      ),
+    );
+    expect(Mole.isInspectorOpen, isFalse);
+    // openDashboard awaits until the route is popped — don't await it.
+    final opened = Mole.openDashboard();
+    await tester.pumpAndSettle();
+    expect(Mole.isInspectorOpen, isTrue);
+    expect(find.text('Mole'), findsOneWidget);
+    Navigator.of(shared.currentContext!).pop();
+    await opened;
+    await tester.pumpAndSettle();
+    expect(Mole.isInspectorOpen, isFalse);
+  });
 }
 
 Future<void> _settle() async {
