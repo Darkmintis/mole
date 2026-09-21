@@ -73,8 +73,7 @@ class _MoleBubbleState extends State<MoleBubble> {
   static const _dragTapSlop = 8.0;
 
   /// How far from vertical-center toward the bottom safe edge (0 = center,
-  /// 1 = bottom). Lands in the lower-middle band so it sits below Ferret
-  /// without hugging the screen edge.
+  /// 1 = bottom). Lands in the lower-middle band.
   static const _defaultLowerBand = 0.35;
 
   /// Current offset (top-left). Restored from [_persistedBubblePosition] when

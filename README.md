@@ -75,12 +75,41 @@ MaterialApp(
 
 Tap the floating bubble to open the inspector.
 
+### MaterialApp.router / GoRouter
+
+Wire Mole's key to the router (same idea as `MaterialApp.navigatorKey`):
+
+```dart
+final router = GoRouter(
+  navigatorKey: Mole.navigatorKey,
+  routes: [
+    GoRoute(path: '/', builder: (_, __) => const HomePage()),
+  ],
+);
+
+MaterialApp.router(
+  routerConfig: router,
+  builder: Mole.builder,
+);
+```
+
+If your app already owns a `GlobalKey<NavigatorState>`, pass it in:
+
+```dart
+Mole.install(
+  config: MoleConfig(navigatorKey: yourNavKey),
+  sources: [/* … */],
+);
+// GoRouter(navigatorKey: yourNavKey, …)
+```
+
 ## Config
 
 | Option | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Master switch. `false` turns Mole off completely. |
 | `enableInRelease` | `false` | Allow Mole in release builds. Shows a console warning and red **MOLE ACTIVE** tag. |
+| `navigatorKey` | `null` | Optional app-owned key for GoRouter. Falls back to [Mole.navigatorKey]. |
 
 | Build | Mole runs when |
 |---|---|
@@ -102,7 +131,9 @@ Pass the same instances your app already uses (supports FSS 9–11). Edits write
 
 ## What you get
 
-- Floating draggable bubble (hidden while the inspector is open)
+- Floating solid bubble (48×48, lower-middle by default) — drag snaps to an edge
+- Remembers position; long-press hides until hot reload / hot restart
+- Hidden while the inspector is open
 - Dashboard grouped by source with live entry counts
 - View, edit, delete, and clear per key or per source
 - Search by key or value

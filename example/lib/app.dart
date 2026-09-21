@@ -23,6 +23,7 @@ class MoleExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'Mole Demo',
       debugShowCheckedModeBanner: false,
+      // Required so the floating bubble can push the inspector.
       navigatorKey: Mole.navigatorKey,
       builder: Mole.builder,
       theme: AppTheme.light(),
