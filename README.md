@@ -108,7 +108,7 @@ Mole.install(
 | Option | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Master switch. `false` turns Mole off completely. |
-| `enableInRelease` | `false` | Allow Mole in release builds. Shows a console warning and red **MOLE ACTIVE** tag. |
+| `enableInRelease` | `false` | Allow Mole in release builds. Shows a console warning and a red border around the bubble. |
 | `navigatorKey` | `null` | Optional app-owned key for GoRouter. Falls back to [Mole.navigatorKey]. |
 
 | Build | Mole runs when |

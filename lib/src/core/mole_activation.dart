@@ -15,7 +15,7 @@ class MoleActivation {
   /// Whether sources, store, and the floating bubble should run.
   final bool active;
 
-  /// Whether to print the release banner and show the red on-screen tag.
+  /// Whether to print the release banner and draw the red bubble border.
   ///
   /// `true` only when Mole is active in a release build.
   final bool showReleaseWarning;

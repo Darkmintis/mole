@@ -28,7 +28,7 @@ import 'package:flutter/widgets.dart';
 /// ### Release warning
 ///
 /// When Mole is active in a release build, a console banner and a permanent
-/// red **MOLE ACTIVE** tag are always shown. There is no warning when Mole is
+/// red border around the bubble are always shown. There is no warning when Mole is
 /// off in release.
 class MoleConfig {
   /// Master switch. When `false`, Mole is a no-op in every build mode.

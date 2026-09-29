@@ -44,6 +44,8 @@ class MoleBubble extends StatefulWidget {
 
   /// Bubble behavior thresholds (cache warning, etc.).
   final MoleConfig config;
+
+  /// Draws the red release-build border around the bubble.
   final bool showReleaseTag;
 
   /// Called when the user taps the bubble to open the inspector.
@@ -219,56 +221,37 @@ class _MoleBubbleState extends State<MoleBubble> {
         final background = scheme.inverseSurface;
         final foreground = scheme.onInverseSurface;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (widget.showReleaseTag)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Material(
-                  color: const Color(0xFFB3261E),
-                  borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Text(
-                      'MOLE ACTIVE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanStart: _onPanStart,
-              onPanUpdate: _onPanUpdate,
-              onPanEnd: _onPanEnd,
-              child: Material(
-                color: background,
-                elevation: 3,
-                shadowColor: Colors.black38,
-                borderRadius: BorderRadius.circular(_radius),
-                clipBehavior: Clip.antiAlias,
-                child: SizedBox(
-                  width: _size,
-                  height: _size,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Icon(Icons.storage_rounded, size: 26, color: foreground),
-                      if (_cacheOverThreshold) _warningDot(scheme),
-                    ],
-                  ),
-                ),
+        final button = GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onPanStart: _onPanStart,
+          onPanUpdate: _onPanUpdate,
+          onPanEnd: _onPanEnd,
+          child: Material(
+            color: background,
+            elevation: 3,
+            shadowColor: Colors.black38,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(_radius),
+              side: widget.showReleaseTag
+                  ? const BorderSide(color: Color(0xFFB3261E), width: 3)
+                  : BorderSide.none,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: SizedBox(
+              width: _size,
+              height: _size,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Icon(Icons.storage_rounded, size: 26, color: foreground),
+                  if (_cacheOverThreshold) _warningDot(scheme),
+                ],
               ),
             ),
-          ],
+          ),
         );
+        if (!widget.showReleaseTag) return button;
+        return Semantics(label: 'Mole active in release build', child: button);
       }),
     );
   }

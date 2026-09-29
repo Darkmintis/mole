@@ -120,6 +120,40 @@ void main() {
       return (store, fake);
     }
 
+    testWidgets('release marker is a red border, not a text tag', (
+      tester,
+    ) async {
+      Future<void> pump({required bool release}) => tester.pumpWidget(
+        MaterialApp(
+          home: Stack(
+            children: [
+              MoleBubble(
+                store: MoleStore(),
+                config: const MoleConfig(),
+                showReleaseTag: release,
+                onOpen: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      final redBorder = find.byWidgetPredicate(
+        (w) =>
+            w is Material &&
+            w.shape is RoundedRectangleBorder &&
+            (w.shape! as RoundedRectangleBorder).side.color ==
+                const Color(0xFFB3261E),
+      );
+
+      await pump(release: true);
+      expect(redBorder, findsOneWidget);
+      expect(find.text('MOLE ACTIVE'), findsNothing);
+      expect(find.bySemanticsLabel('Mole active in release build'), findsOne);
+
+      await pump(release: false);
+      expect(redBorder, findsNothing);
+    });
+
     testWidgets('shows a database icon, never a count number', (tester) async {
       final fake = FakeMoleSource(store: {'a': 1, 'b': 2, 'c': 3});
       final store = MoleStore();
