@@ -120,6 +120,36 @@ void main() {
       return (store, fake);
     }
 
+    testWidgets('0×0 first frame does not pin the bubble top-left', (
+      tester,
+    ) async {
+      tester.view.physicalSize = Size.zero;
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+      MoleBubble.clearPersistedPositionForTest();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Stack(
+            children: [
+              MoleBubble(
+                store: MoleStore(),
+                config: const MoleConfig(),
+                showReleaseTag: false,
+                onOpen: () {},
+              ),
+            ],
+          ),
+        ),
+      );
+      tester.view.physicalSize = const Size(400, 800);
+      await tester.pumpAndSettle();
+
+      final center = tester.getCenter(find.byIcon(Icons.storage_rounded));
+      expect(center.dx, greaterThan(300)); // right side
+      expect(center.dy, greaterThan(400)); // lower half
+    });
+
     testWidgets('release marker is a red border, not a text tag', (
       tester,
     ) async {

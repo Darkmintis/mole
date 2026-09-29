@@ -219,6 +219,8 @@ class _MoleBubbleState extends State<MoleBubble> {
     if (_userHidden) return const SizedBox.shrink();
 
     final media = MediaQuery.of(context);
+    // The first frame can report a 0×0 screen; clamp bounds would be invalid.
+    if (media.size.isEmpty) return const SizedBox.shrink();
     final position = _clamp(_offset ?? _defaultOffset(media), media);
 
     return Positioned(
