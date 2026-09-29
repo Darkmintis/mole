@@ -188,12 +188,13 @@ void main() {
       await pumpWithBubble(tester, const MoleConfig());
 
       const size = 48.0;
-      const center = (800 - size) / 2;
-      const bottom = 800 - size - 24;
+      const top = 12.0;
+      const bottom = 800 - size - 12;
+      const center = (top + bottom) / 2;
       const expectedTop = center + (bottom - center) * _bubbleLowerBand;
 
       final bubble = tester.getRect(find.byType(MoleBubble));
-      expect(bubble.right, closeTo(400 - 16, 0.1));
+      expect(bubble.right, closeTo(400 - 12, 0.1));
       expect(bubble.top, closeTo(expectedTop, 0.1));
     });
 
@@ -294,7 +295,28 @@ void main() {
 
       final after = tester.getCenter(button);
       expect(after.dx, lessThan(before.dx - 50));
-      expect(after.dx, closeTo(8 + 24, 1)); // edgeMargin + half size
+      expect(after.dx, closeTo(12 + 24, 1)); // edgeMargin + half size
+    });
+
+    testWidgets('keeps 12px clear of status bar and navigation bar', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1.0;
+      tester.view.padding = const FakeViewPadding(top: 40, bottom: 30);
+      addTearDown(tester.view.reset);
+      addTearDown(MoleBubble.clearPersistedPositionForTest);
+
+      await pumpWithBubble(tester, const MoleConfig());
+      final button = find.byIcon(Icons.storage_rounded);
+
+      await tester.drag(button, const Offset(0, -2000));
+      await tester.pumpAndSettle();
+      expect(tester.getCenter(button).dy, closeTo(40 + 12 + 24, 1));
+
+      await tester.drag(button, const Offset(0, 4000));
+      await tester.pumpAndSettle();
+      expect(tester.getCenter(button).dy, closeTo(800 - 30 - 12 - 24, 1));
     });
 
     testWidgets('remembers position after bubble is remounted', (tester) async {

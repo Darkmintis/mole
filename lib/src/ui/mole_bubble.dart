@@ -68,7 +68,7 @@ class MoleBubble extends StatefulWidget {
 class _MoleBubbleState extends State<MoleBubble> {
   static const _size = 48.0;
   static const _radius = 12.0;
-  static const _edgeMargin = 8.0;
+  static const _edgeMargin = 12.0;
   static const _dragTapSlop = 8.0;
 
   /// How far from vertical-center toward the bottom safe edge (0 = center,
@@ -114,28 +114,36 @@ class _MoleBubbleState extends State<MoleBubble> {
     return widget.store.totalCacheBytes >= thresholdBytes;
   }
 
-  Offset _defaultOffset(Size size) {
-    final center = (size.height - _size) / 2;
-    final bottom = size.height - _size - 24;
-    return Offset(
-      size.width - _size - 16,
-      center + (bottom - center) * _defaultLowerBand,
+  /// Top-left bounds: [_edgeMargin] from every edge, inside the safe area
+  /// (status bar, navigation bar, notches) — same rule as Ferret and Sway.
+  Rect _bounds(MediaQueryData media) {
+    final pad = media.padding;
+    return Rect.fromLTRB(
+      pad.left + _edgeMargin,
+      pad.top + _edgeMargin,
+      media.size.width - pad.right - _size - _edgeMargin,
+      media.size.height - pad.bottom - _size - _edgeMargin,
     );
   }
 
-  Offset _clamp(Offset offset, MediaQueryData media) => Offset(
-    offset.dx.clamp(_edgeMargin, media.size.width - _size - _edgeMargin),
-    offset.dy.clamp(
-      media.padding.top + _edgeMargin,
-      media.size.height - _size - 24,
-    ),
-  );
+  Offset _defaultOffset(MediaQueryData media) {
+    final b = _bounds(media);
+    final center = (b.top + b.bottom) / 2;
+    return Offset(b.right, center + (b.bottom - center) * _defaultLowerBand);
+  }
+
+  Offset _clamp(Offset offset, MediaQueryData media) {
+    final b = _bounds(media);
+    return Offset(
+      offset.dx.clamp(b.left, b.right),
+      offset.dy.clamp(b.top, b.bottom),
+    );
+  }
 
   Offset _snapToEdge(Offset offset, MediaQueryData media) {
-    final midX = media.size.width / 2;
-    final snapLeft = offset.dx + _size / 2 < midX;
-    final x = snapLeft ? _edgeMargin : media.size.width - _size - _edgeMargin;
-    return _clamp(Offset(x, offset.dy), media);
+    final b = _bounds(media);
+    final snapLeft = offset.dx + _size / 2 < media.size.width / 2;
+    return _clamp(Offset(snapLeft ? b.left : b.right, offset.dy), media);
   }
 
   void _persistPosition() {
@@ -163,7 +171,7 @@ class _MoleBubbleState extends State<MoleBubble> {
 
   void _onPanUpdate(DragUpdateDetails details) {
     final media = MediaQuery.of(context);
-    final current = _offset ?? _defaultOffset(media.size);
+    final current = _offset ?? _defaultOffset(media);
     _dragDistance += details.delta.distance;
     if (_dragDistance >= _dragTapSlop) {
       _longPressTimer?.cancel();
@@ -181,7 +189,7 @@ class _MoleBubbleState extends State<MoleBubble> {
       return;
     }
     final media = MediaQuery.of(context);
-    final current = _offset ?? _defaultOffset(media.size);
+    final current = _offset ?? _defaultOffset(media);
     setState(() {
       _offset = _snapToEdge(current, media);
       _persistPosition();
@@ -211,7 +219,7 @@ class _MoleBubbleState extends State<MoleBubble> {
     if (_userHidden) return const SizedBox.shrink();
 
     final media = MediaQuery.of(context);
-    final position = _clamp(_offset ?? _defaultOffset(media.size), media);
+    final position = _clamp(_offset ?? _defaultOffset(media), media);
 
     return Positioned(
       left: position.dx,
