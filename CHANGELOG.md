@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5]
+
+### Changed
+
+- Release builds (`enableInRelease: true`) mark the bubble with a red border
+  instead of the `MOLE ACTIVE` text tag, plus a
+  "Mole active in release build" screen-reader label.
+- Bubble keeps a 12px gap from every edge inside the safe area (status bar,
+  navigation bar, notches).
+- Example app enables Mole in release builds to show the red border.
+
+### Fixed
+
+- Bubble no longer throws when the first frame reports a 0×0 screen.
+
 ## [0.1.4]
 
 ### Added

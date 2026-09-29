@@ -9,7 +9,7 @@ Local storage inspector for Flutter. Pass the storage instances your app already
 
 ```yaml
 dependencies:
-  mole: ^0.1.4
+  mole: ^0.1.5
 ```
 
 ```bash
